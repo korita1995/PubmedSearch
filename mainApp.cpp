@@ -1,4 +1,5 @@
-﻿#include "Resource.h"
+﻿/*
+#include "Resource.h"
 #include <windows.h>
 #include <windowsx.h>
 #include <string>
@@ -16,8 +17,7 @@
 using namespace std;
 
 // main function
-int WINAPI _tWinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPTSTR lpsCmdLine, int nCmdShow) {
-	hPrevInst = NULL;
+int WINAPI WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPSTR lpsCmdLine, int nCmdShow) {
 	DialogBox(hCurInst, TEXT("DLG"), 0, (DLGPROC)DlgProc);
 
 	return 0;
@@ -25,12 +25,12 @@ int WINAPI _tWinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPTSTR lpsCmdLine,
 
 LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
-		/*
-		HANDLE_DLG_MSG(hwnd, WM_CLOSE, Main_OnClose); // ウィンドウを閉じる操作を実行時
-		HANDLE_DLG_MSG(hwnd, WM_COMMAND, Main_OnCommand);
-		HANDLE_DLG_MSG(hwnd, WM_DESTROY, Main_OnDestroy); // DestroyWindow 関数の実行時
-		HANDLE_DLG_MSG(hwnd, WM_SIZE, Main_OnSize); // ウィンドウサイズ変更時
-		*/
+		
+		//HANDLE_DLG_MSG(hwnd, WM_CLOSE, Main_OnClose); // ウィンドウを閉じる操作を実行時
+		//HANDLE_DLG_MSG(hwnd, WM_COMMAND, Main_OnCommand);
+		//HANDLE_DLG_MSG(hwnd, WM_DESTROY, Main_OnDestroy); // DestroyWindow 関数の実行時
+		//HANDLE_DLG_MSG(hwnd, WM_SIZE, Main_OnSize); // ウィンドウサイズ変更時
+		
 
 	case WM_INITDIALOG:
 		SetDlgPosCenter(hwnd);
@@ -38,13 +38,14 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
+		break;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
 
 	case WM_COMMAND:
-		
+	{
 		INT iCheck;
 		UINT wmId;
 		wmId = LOWORD(wParam);
@@ -106,15 +107,15 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				const char* nfn = newFileName.c_str();
 				WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
 
-				//MessageBox(0, Nfn, _TEXT("選択された論文ファイル名"), MB_OK);
 				HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
-					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hwnd, NULL, GetModuleHandle(NULL), NULL);
-				if (!child)
+					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
+				if (!child) {
 					break;
+				}
 			}
 			break;
 		}
-		
+
 		case IDOK:
 		{
 			//TCHAR* szBuf = (TCHAR*)malloc(SIZE);
@@ -131,9 +132,8 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				const char* nfn = newFileName.c_str();
 				WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
 
-				//MessageBox(0, Nfn, _TEXT("選択された論文ファイル名"), MB_OK);
 				HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
-					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hwnd, NULL, GetModuleHandle(NULL), NULL);
+					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
 				if (!child)
 					break;
 			}
@@ -145,7 +145,6 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				const char* nfn = newFileName.c_str();
 				WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
 
-				//MessageBox(0, Nfn, _TEXT("選択された論文ファイル名"), MB_OK);
 				HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
 					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
 				if (!child)
@@ -157,6 +156,7 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		default:
 			break;
 		}
+	}
 	}
 	return 0;
 }
@@ -246,3 +246,4 @@ BOOL SetDlgPosCenter(HWND hwnd){
 	// 画面中央に移動
 	return SetWindowPos(hwnd, NULL, cx, cy, 0, 0, (SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER));
 }
+*/
