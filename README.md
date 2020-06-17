@@ -2,7 +2,7 @@
 PubmedをIDもしくは論文名で検索して、規定のフォーマットで論文情報を取得するプログラム（Windows用）
 
 # Visual studio 2019 でビルドする方法(64bit用, Release版)
-1) https://github.com/curl/curl　をダウンロード
+1) https://github.com/curl/curl をダウンロード
 2) x64 Native Tools Command Prompt for VS 2019 を起動
 3) cd (ダウンロードしたdirectory)/curl-master/winbuild
 4) set RTLIBCFG=static
