@@ -73,7 +73,56 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SetDlgPosCenter(hwnd);
+		// WM_DROPFILESメッセージを処理するようにする
+		DragAcceptFiles(hwnd, TRUE);
 		break;
+
+	case WM_DROPFILES:
+	{
+		HDROP hDrop;
+		UINT uFileNo;
+		static TCHAR dFile[SIZE];
+		HANDLE hFile;
+		hDrop = (HDROP)wParam;
+		// ドロップされたファイル数を取得
+		uFileNo = DragQueryFile((HDROP)wParam, -1, NULL, 0);
+		WCHAR* dFileName;
+
+		if (uFileNo > 1)
+			MessageBox(hwnd, TEXT("ファイルを開けませんでした"), TEXT("失敗"), MB_OK);
+		else {
+			DragQueryFile(hDrop, 0, dFile, sizeof(dFile));
+			hFile = CreateFile(dFile, // ファイル名
+				GENERIC_READ,          // アクセス指定 GENERIC_READ:読み取り
+				0,                     // 共有方法 0:共有しない
+				NULL,                  // セキュリティ属性 0:デフォルト
+				OPEN_EXISTING,         // 動作指定 OPEN_EXISTING:ファイルをオープン。
+									   //  ファイルが存在していない場合、
+									   //  関数が失敗
+				FILE_ATTRIBUTE_NORMAL, // フラグと属性
+									   // FILE_ATTRIBUTE_NORMAL:属性設定なし
+				NULL);
+			if (hFile != INVALID_HANDLE_VALUE) {
+				CloseHandle(hFile);
+				dFileName = PathFindFileName(dFile);
+				//MessageBox(hwnd, dFileName, TEXT("ファイル名"), MB_OK);
+				char* dfileName = wcharToChar(dFileName); // WCHAR*型からchar*型への変換
+
+				// Pubmedで論文検索して、Esummaryの情報をもとにファイル名生成
+				string newFileName = searchPubmedKeyword(dfileName);
+				const char* nfn = newFileName.c_str();
+				WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
+
+				HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
+					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
+				if (!child) {
+					break;
+				}
+			}
+		}
+		DragFinish(hDrop);
+		break;
+	}
 
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
