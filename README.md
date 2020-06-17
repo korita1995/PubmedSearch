@@ -16,7 +16,7 @@ PubmedをIDもしくは論文名で検索して、規定のフォーマットで
 10) C/C++ > ランタイムライブラリ を マルチスレッドDLL (/MD) に設定
 11) リンカー > 全般 > 追加のライブラリディレクトリに以下のPathを追加  
 (ダウンロードしたdirectory)/curl-master/builds/libcurl-vc16-x64-release-static-ipv6-sspi-winssl/lib
-12) リンカー > 追加の依存ファイルに以下を追加する\n
+12) リンカー > 追加の依存ファイルに以下を追加する  
 Normaliz.lib;Crypt32.lib;Wldap32.lib;Ws2_32.lib;(ダウンロードしたdirectory)/curl-master/builds/libcurl-vc16-x64-release-static-ipv6-sspi-winssl/lib/libcurl_a.lib
 
 # C++ 用のJSONライブラリの導入方法
