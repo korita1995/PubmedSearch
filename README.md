@@ -7,7 +7,7 @@ PubmedをIDもしくは論文名で検索して、規定のフォーマットで
 3) cd (ダウンロードしたdirectory)/curl-master/winbuild
 4) set RTLIBCFG=static
 5) nmake /f Makefile.vc mode=static vc=16 debug=no
-6) curlを利用したいプロジェクトのプロパティを開く
+6) curlを利用したいプロジェクトのプロパティを開く  
 （メニューバーのプロジェクト(P)>(プロジェクト名)のプロパティ(P)）
 7) 構成(C):Release、プラットフォーム(P):x64 に設定
 8) C/C++ > 全般 > 追加のインクルードディレクトリに以下のPathを追加  
