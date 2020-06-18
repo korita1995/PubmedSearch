@@ -108,7 +108,8 @@ string searchPubmedId(string uid) {
     string paperTitle = j["title"];
     string journalName = j["source"];
     string ePubDate = j["epubdate"];
-    string newFileName = firstAuthor + ", "s + lastAuthor + " ("s + journalName + " "s + ePubDate + ") "s + paperTitle;
+    string ePubYear = ePubDate.substr(0, 4);
+    string newFileName = firstAuthor + ", "s + lastAuthor + " ("s + journalName + " "s + ePubYear + ") "s + paperTitle;
 
     return newFileName;
 }
