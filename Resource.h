@@ -6,6 +6,8 @@
 #define IDC_RADIO1    1010
 #define IDC_RADIO2    1020
 #define IDC_EDIT1	1030
+#define IDC_EDIT2	1040
+#define IDC_LABEL	1050
 
 // Menu Item ID
 #define IDM_FILE_OPEN    2000
