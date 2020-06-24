@@ -9,16 +9,9 @@
 //#include "mainApp.h"
 
 /*
-実装すべき機能 (2020/6/17)
-1) PDFをドラッグ＆ドロップで検索機能の追加 (done)
-（ドラッグ＆ドロップでファイルパスを取得）
-2) TitleかPMIDかの判定機能の追加 (done)
-（入力内容が数字かを判定）
-3) ウィンドウ起動時に、クリップボードの内容が文字列か数字か判定 (done)
-4) 3)の判定次第で、論文名かPMIDのどちらかのラジオボタンを選択＆入力欄の初期値とする (done)
-5) 変換後のファイル名を自動でクリップボードにコピー (done)
-6) 変換後のファイル名を編集した場合、あとからクリップボードにコピー可能にする (done)
-6) 論文が複数ヒットした場合、その中から候補を選択する
+実装すべき機能 (2020/6/24)
+1) Ctrl+Aで入力欄を全選択
+2) キーワード検索で複数論文がヒットした場合、すべての検索結果を表示する
 */
 
 #define HANDLE_DLG_MSG(hwnd, msg, fn) \
@@ -26,6 +19,7 @@
         return SetDlgMsgResult(hwnd, msg, HANDLE_##msg(hwnd, wParam, lParam,fn))
 #define GetMonitorRect(rc)  SystemParametersInfo(SPI_GETWORKAREA,0,rc,0)
 #define SIZE 1000
+#define VK_A 0x41
 
 using namespace std;
 
@@ -35,6 +29,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL SetDlgPosCenter(HWND);
 void sendClip(HWND, TCHAR*);
 LRESULT CALLBACK childDlgProc(HWND, UINT, WPARAM, LPARAM);
+bool IsStrSpace(TCHAR*);
 
 BOOL SetDlgPosCenter(HWND hwnd) {
 	RECT    rc1;        // デスクトップ領域
@@ -97,7 +92,6 @@ LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 			strClip = (PTSTR)GlobalLock(hg);
 			lstrcpy(strText, strClip);
 			GlobalUnlock(hg);
-			//MessageBox(hwnd, strText, TEXT("クリップボードの内容"), MB_OK);
 			SetWindowText(GetDlgItem(hwnd, IDC_EDIT2), strText);
 			free(strText);
 			CloseClipboard();
@@ -105,12 +99,10 @@ LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		break;
 
 	case WM_CLOSE:
-		//DestroyWindow(hwnd);
 		EndDialog(hwnd, WM_CLOSE);
 		break;
 
 	case WM_DESTROY:
-		//PostQuitMessage(0);
 		break;
 
 	case WM_COMMAND:
@@ -120,7 +112,8 @@ LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 			TCHAR cBuf[SIZE];
 			HGLOBAL hg;
 			PTSTR	strMem;
-			if (HIWORD(wParam) == EN_UPDATE) {       //      エディットボックスが変更された場合
+			// エディットボックスが変更された場合
+			if (HIWORD(wParam) == EN_UPDATE) {
 				GetDlgItemText(hwnd, IDC_EDIT2, (TCHAR*)cBuf, sizeof(cBuf) / sizeof(TCHAR));
 				sendClip(hwnd, cBuf);
 			}
@@ -136,11 +129,15 @@ LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
+	// ダイアログボックスの生成時
 	case WM_INITDIALOG:
+		// ダイアログの位置を中央に移動
 		SetDlgPosCenter(hwnd);
+
 		// WM_DROPFILESメッセージを処理するようにする
 		DragAcceptFiles(hwnd, TRUE);
-		// クリップボードからコピー
+
+		// クリップボードをコピーして入力欄にペースト
 		HGLOBAL hg;
 		PTSTR strText, strClip;
 		
@@ -149,64 +146,58 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			strClip = (PTSTR)GlobalLock(hg);
 			lstrcpy(strText, strClip);
 			GlobalUnlock(hg);
-			//MessageBox(hwnd, strText, TEXT("クリップボードの内容"), MB_OK);
 			SetWindowText(GetDlgItem(hwnd, IDC_EDIT1), strText);
-			// PMIDか判定
-			int	nValue;
-			if (nValue = ::_ttoi(strText)) {
-				Button_SetCheck(GetDlgItem(hwnd, IDC_RADIO1), BST_CHECKED);
-			}
-			else {
-				Button_SetCheck(GetDlgItem(hwnd, IDC_RADIO2), BST_CHECKED);
-			}
 			free(strText);
 			CloseClipboard();
 		}
+
+		// 左上にアイコン表示
+		HICON hIcon;
+		hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP), IMAGE_ICON, 16, 16, 0);
+		SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+
 		break;
 
+	// PDFをドラッグ＆ドロップ時に実行
 	case WM_DROPFILES:
 	{
-		// ドラッグ＆ドロップ時に実行
 		HDROP hDrop;
 		UINT uFileNo;
 		static TCHAR dFile[SIZE];
 		HANDLE hFile;
-		hDrop = (HDROP)wParam; // ドロップされたファイル数を取得
+		hDrop = (HDROP)wParam; // ドロップされたファイル数
 		uFileNo = DragQueryFile((HDROP)wParam, -1, NULL, 0);
 		WCHAR* dFileName;
 		WCHAR* dFileNameExtension;
 
+		// 複数のPDFをドラッグ＆ドロップした時（エラー）
 		if (uFileNo > 1)
 			MessageBox(hwnd, TEXT("ファイルを開けませんでした"), TEXT("エラー"), MB_OK);
+
+		// 1つのPDFをドラッグ＆ドロップした時に実行
 		else {
 			DragQueryFile(hDrop, 0, dFile, sizeof(dFile));
 			hFile = CreateFile(dFile,GENERIC_READ,0,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			// 有効なファイルかチェックしてから実行
 			if (hFile != INVALID_HANDLE_VALUE) {
 				CloseHandle(hFile);
-				dFileName = PathFindFileName(dFile);
-				dFileNameExtension = PathFindExtension(dFile);
+				dFileName = PathFindFileName(dFile); // ファイル名
+				dFileNameExtension = PathFindExtension(dFile); // .を含めたファイルの拡張子
 				wchar_t ext[] = L".pdf";
+				wchar_t Ext[] = L".PDF";
 				const wchar_t* p = wcsstr(dFileNameExtension, ext);
-				// ドラッグ＆ドロップしたファイルがPDFかを判定
-				if (p == NULL) {
+				const wchar_t* P = wcsstr(dFileNameExtension, Ext);
+				// ドラッグ＆ドロップしたファイルの拡張子が.pdfもしくは.PDFかを判定
+				if ((p == NULL)&(P == NULL))
 					MessageBox(hwnd, TEXT("PDFのみ選択可能です"), TEXT("エラー"), MB_OK);
-				}
 				else {
-					//MessageBox(hwnd, dFileNameExtension, TEXT("ファイルの拡張子"), MB_OK);
 					char* dfileName = wcharToChar(dFileName); // WCHAR*型からchar*型への変換
-
-					// Pubmedで論文検索して、Esummaryの情報をもとにファイル名生成
-					string newFileName = searchPubmedKeyword(dfileName);
-					const char* nfn = newFileName.c_str();
+					string newFileName = searchPubmedKeyword(dfileName); // Pubmedでキーワード検索
+					const char* nfn = newFileName.c_str(); // string型からconst char*型への変換
 					WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
-
-					//HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
-					//	CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
-					//if (!child) {
-					//	break;
-					//}
-					sendClip(hwnd, Nfn);
-					DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+					sendClip(hwnd, Nfn); // クリップボードに検索結果を転送
+					//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+					SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn); // アプリ下側のエディットコントロールに検索結果をペースト
 				}
 			}
 		}
@@ -222,6 +213,19 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		PostQuitMessage(0);
 		break;
 
+	// システムキー以外のキーボードが押された時
+	case WM_KEYDOWN:
+		// Ctrl+Aを押したときに実行（うまくいってないためmust fix）
+		if (LOWORD(wParam) == VK_A) {
+			if (GetKeyState(VK_CONTROL) < 0) {
+				int nCount;
+				nCount = GetWindowTextLength(hwnd);
+				SendMessage(GetDlgItem(hwnd, IDC_EDIT1), EM_SETSEL, 0, -1);
+			}
+		}
+		break;
+
+	// ダイアログに対して何かしらの操作が行われた時
 	case WM_COMMAND:
 		{
 			INT iCheck;
@@ -229,114 +233,138 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			wmId = LOWORD(wParam);
 
 			switch (wmId) {
-			case IDCANCEL:
-				{
-				//TCHAR* szMsg = (TCHAR*)malloc(SIZE);
-				//TCHAR* szCaption = (TCHAR*)malloc(SIZE);
-				TCHAR szMsg[SIZE];
-				TCHAR szCaption[SIZE];
-				LoadString(GetModuleHandle(NULL), IDS_MSG_QUIT, szMsg, SIZE);
-				LoadString(GetModuleHandle(NULL), IDS_CAPTION_CONF, szCaption, SIZE);
-				if (IDYES == MessageBox(hwnd, szMsg, szCaption, MB_YESNO)) {
-					// 閉じるボタンが押されたとき確認メッセージを出す
-					DestroyWindow(hwnd);
-					//free(szMsg);
-					//free(szCaption);
-				}
-				break;
-			}
-
+			// ファイル>終了を選択時
 			case IDM_FILE_EXIT:
-				// ファイル>終了を選択時
+				
 				EndDialog(hwnd, IDM_FILE_EXIT);
 				break;
 
+			// ヘルプ>操作方法を選択時
 			case IDM_HELP_ABOUT:
 				{
-				//TCHAR* hCap = (TCHAR*)malloc(SIZE);
-				//TCHAR* hText = (TCHAR*)malloc(SIZE);
 				TCHAR hCap[SIZE];
 				TCHAR hText[SIZE];
-				// ヘルプ>操作方法を選択時
 				LoadString(GetModuleHandle(NULL), HELP_CAPTION, hCap, SIZE);
 				LoadString(GetModuleHandle(NULL), HELP_TEXT, hText, SIZE);
 				if (IDOK == ::MessageBox(NULL, hText, hCap, MB_OK)) {
-					//free(hCap);
-					//free(hText);
 					break;
 				}
 				break;
 			}
 
+			// ファイル>開くを選択時
 			case IDM_FILE_OPEN:
 			{
-				//TCHAR* szFile = (TCHAR*)malloc(SIZE);
 				TCHAR szFile[SIZE];
-				// ファイル>開くを選択時
+				// 選択した論文PDFのファイルのフルパスを取得してバッファーに格納
 				if (getFileName(0, szFile, SIZE, _TEXT("C:\\"))) {
-					// szFile: 選択した論文PDFのファイルのフルパス(WCHAR*型)
-					// 選択した論文PDFのファイル名を取得
 					WCHAR* szFileName;
-					szFileName = PathFindFileName(szFile);
+					szFileName = PathFindFileName(szFile); // ファイルのフルパスからファイル名のみを取得
 					char* szfileName = wcharToChar(szFileName); // WCHAR*型からchar*型への変換
-
-					// Pubmedで論文検索して、Esummaryの情報をもとにファイル名生成
-					string newFileName = searchPubmedKeyword(szfileName);
+					string newFileName = searchPubmedKeyword(szfileName); // Pubmedでキーワード検索
 					const char* nfn = newFileName.c_str();
 					WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
-
-					//HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
-					//	CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
-					//if (!child) {
-					//	break;
-					//}
-					sendClip(hwnd, Nfn);
-					DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+					sendClip(hwnd, Nfn); // クリップボードに検索結果を転送
+					//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+					SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn); // アプリ下側のエディットコントロールに検索結果をペースト
 				}
 				break;
 			}
 
+			// 「入力欄を削除」ボタンを押した時
+			case IDC_DEL:
+				SendMessage(GetDlgItem(hwnd, IDC_EDIT1), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hwnd, IDC_EDIT1), WM_CLEAR, 0, 0);
+				break;
+
+			// 「クリップボードから検索」ボタンを押した時
+			case IDC_SEARCH:
+			{
+				HGLOBAL hg;
+				PTSTR strText, strClip;
+				// クリップボードをコピーしてPubmed検索
+				if (OpenClipboard(hwnd) && (hg = GetClipboardData(CF_UNICODETEXT))) {
+					strText = (PTSTR)malloc(GlobalSize(hg));
+					strClip = (PTSTR)GlobalLock(hg);
+					lstrcpy(strText, strClip);
+					GlobalUnlock(hg);
+
+					// クリップボードの内容が数字（PMID）だった場合
+					int	nValue;
+					if (nValue = ::_ttoi(strText)) {
+						char* paperIdChar = wcharToChar(strText);
+						string paperId = paperIdChar;
+						try {
+							string newFileName = searchPubmedId(paperId); // PMIDで検索を実行
+							const char* nfn = newFileName.c_str();
+							WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
+							sendClip(hwnd, Nfn);
+							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
+						}
+						catch (...) { MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK); }
+
+					}
+					else {
+						// 論文名で検索を実行
+						char* szfileName = wcharToChar(strText);
+						try {
+							string newFileName = searchPubmedKeyword(szfileName);
+							const char* nfn = newFileName.c_str();
+							WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
+							sendClip(hwnd, Nfn);
+							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
+						}
+						catch (...) { MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK); }
+
+					}
+
+					free(strText);
+					CloseClipboard();
+				}
+				break;
+			}
+
+			// 「入力欄から検索」ボタンを押した時
 			case IDOK:
 			{
-				//TCHAR* szBuf = (TCHAR*)malloc(SIZE);
 				TCHAR szBuf[SIZE];
 				// 検索ボタンを実行時
-				iCheck = Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO1));
 				GetDlgItemText(hwnd, IDC_EDIT1, szBuf, (int)sizeof(szBuf));
-				if (iCheck == BST_CHECKED) {
-					// PMIDで検索を実行
-					char* paperIdChar = wcharToChar(szBuf);
-					//free(szBuf);
-					string paperId = paperIdChar;
-					string newFileName = searchPubmedId(paperId);
-					const char* nfn = newFileName.c_str();
-					WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
-
-					/*
-					HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
-						CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
-					if (!child)
-						break;
-						*/
-					sendClip(hwnd, Nfn);
-					DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
-				}
+				if (IsStrSpace(szBuf))
+					MessageBox(hwnd, TEXT("PMIDもしくは論文名（キーワード）を入力してください"), TEXT("エラー"), MB_OK);
 				else {
-					// 論文名で検索を実行
-					char* szfileName = wcharToChar(szBuf);
-					//free(szBuf);
-					string newFileName = searchPubmedKeyword(szfileName);
-					const char* nfn = newFileName.c_str();
-					WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
-
-					/*
-					HWND child = CreateWindow(TEXT("EDIT"), Nfn, WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
-						CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
-					if (!child)
-						break;
-					*/
-					sendClip(hwnd, Nfn);
-					DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+					int	nValue;
+					if (nValue = ::_ttoi(szBuf)) {
+						// PMIDで検索を実行
+						char* paperIdChar = wcharToChar(szBuf);
+						string paperId = paperIdChar;
+						try {
+							string newFileName = searchPubmedId(paperId);
+							const char* nfn = newFileName.c_str();
+							WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
+							sendClip(hwnd, Nfn);
+							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
+						}
+						catch (...){ MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK); }
+						
+					}
+					else {
+						// 論文名で検索を実行
+						char* szfileName = wcharToChar(szBuf);
+						try {
+							string newFileName = searchPubmedKeyword(szfileName);
+							const char* nfn = newFileName.c_str();
+							WCHAR* Nfn = charToWchar(nfn); // char*型からWCHAR*型への変換
+							sendClip(hwnd, Nfn);
+							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
+							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
+						}
+						catch (...){ MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK); }
+						
+					}
 				}
 				break;
 			}
@@ -352,6 +380,7 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
+
 	HWND hwnd;
 	MSG msg;
 	WNDCLASS winc;
@@ -360,7 +389,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 	winc.lpfnWndProc = WndProc;
 	winc.cbClsExtra = winc.cbWndExtra = 0;
 	winc.hInstance = hInstance;
-	winc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	winc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP));
 	winc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	winc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	winc.lpszMenuName = NULL;
@@ -381,9 +410,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 	if (hwnd == NULL)
 		return -1;
 
+	ShowWindow(hwnd, nCmdShow);
+	UpdateWindow(hwnd);
+
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
 	return msg.wParam;
+}
+
+// 半角空白文字,全角空白文字のチェック
+bool IsStrSpace(TCHAR* str) {
+	StrTrim(str, L" ");
+	const size_t textSize = 256;
+	char lpcText[textSize];
+	WideCharToMultiByte(CP_ACP, 0, str, -1, lpcText, textSize, NULL, NULL);
+	char* pPoint = lpcText;
+	bool bSpace = TRUE; // 文字列が『全角スペース』又は『半角スペース』のみで構成されているかどうか
+	while (*pPoint != '\0') {
+		if (!memcmp(pPoint, "　", 2)) {
+			pPoint += 2;
+		}
+		else if (!memcmp(pPoint, " ", 1)) {
+			pPoint++;
+		}
+		else {
+			bSpace = FALSE;
+			break;
+		}
+	}
+	return bSpace;
 }

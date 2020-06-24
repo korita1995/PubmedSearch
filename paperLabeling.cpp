@@ -9,6 +9,8 @@
 #include <nlohmann/json.hpp>
 #include <curl/curl.h> 
 #include "paperLabeling.h"
+
+
 #define SIZE 1000
 using namespace std;
 using json = nlohmann::json;
@@ -104,12 +106,20 @@ string searchPubmedId(string uid) {
     // 論文情報をつなげて新規ファイル名を作成
     json j = esummaryResult["result"][uid];
     string firstAuthor = j["authors"][0]["name"];
+    string a, b; // last name だけ取り出し
+    int pos = firstAuthor.find(' ');
+    a = firstAuthor.substr(0, pos);
+    b = firstAuthor.substr((unsigned __int64)pos + 1);
     string lastAuthor = j["lastauthor"];
+    string c, d; // last name だけ取り出し
+    int pos2 = lastAuthor.find(' ');
+    c = lastAuthor.substr(0, pos2);
+    d = lastAuthor.substr((unsigned __int64)pos2 + 1);
     string paperTitle = j["title"];
     string journalName = j["source"];
-    string ePubDate = j["epubdate"];
-    string ePubYear = ePubDate.substr(0, 4);
-    string newFileName = firstAuthor + ", "s + lastAuthor + " ("s + journalName + " "s + ePubYear + ") "s + paperTitle;
+    string PubDate = j["pubdate"];
+    string PubYear = PubDate.substr(0, 4);
+    string newFileName = a + " "s + c + " ("s + journalName + " "s + PubYear + ") "s + paperTitle;
 
     return newFileName;
 }
