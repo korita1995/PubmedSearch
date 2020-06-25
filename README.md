@@ -17,7 +17,7 @@ paper labeling.exe ファイルをダウンロードするだけで実行可能�
 10) C/C++ > 全般 > 追加のインクルードディレクトリに以下のPathを追加  
 (ダウンロードしたdirectory)/curl-master/builds/libcurl-vc16-x64-release-static-ipv6-sspi-winssl/include
 11) C/C++ > プリプロセッサの定義　に CURL_STATICLIB を追加　（もしかしたらこの工程不要かも）
-12) C/C++ > ランタイムライブラリ を マルチスレッドDLL (/MD) に設定
+12) C/C++ > ランタイムライブラリ を マルチスレッド (/MT) に設定
 13) リンカー > 全般 > 追加のライブラリディレクトリに以下のPathを追加  
 (ダウンロードしたdirectory)/curl-master/builds/libcurl-vc16-x64-release-static-ipv6-sspi-winssl/lib
 14) リンカー > 追加の依存ファイルに以下を追加する  
