@@ -1,6 +1,6 @@
 # PubmedSearch
 PubmedをIDもしくは論文名で検索して、規定のフォーマットで論文情報を取得するプログラム（Windows用）  
-paper labeling.exe ファイルをダウンロードするだけで実行可能です
+paper labeling.exe ファイルをダウンロードするだけで実行可能です。
 
 # Visual studio 2019 でビルドする方法(64bit用, Release版)
 1) https://github.com/curl/curl をダウンロード
@@ -32,3 +32,6 @@ Normaliz.lib;Crypt32.lib;Wldap32.lib;Ws2_32.lib;(ダウンロードしたdirecto
 1) プロジェクトのプロパティを開く
 2) リンカー > システム > サブシステム を Windows (/SUBSYSTEM:WINDOWS) に設定
 3) リンカー > 入力 > 追加の依存ファイル に User32.lib を追加 (Windows.h の関数を利用するため)
+
+# License
+This software is released under the MIT License, see LICENSE.txt.
