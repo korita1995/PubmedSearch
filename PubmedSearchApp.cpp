@@ -9,9 +9,9 @@
 //#include "mainApp.h"
 
 /*
-À‘•‚·‚×‚«‹@”\ (2020/6/24)
-1) Ctrl+A‚Å“ü—Í—“‚ğ‘S‘I‘ğ
-2) ƒL[ƒ[ƒhŒŸõ‚Å•¡”˜_•¶‚ªƒqƒbƒg‚µ‚½ê‡A‚·‚×‚Ä‚ÌŒŸõŒ‹‰Ê‚ğ•\¦‚·‚é
+å®Ÿè£…ã™ã¹ãæ©Ÿèƒ½ (2020/6/24)
+1) Ctrl+Aã§å…¥åŠ›æ¬„ã‚’å…¨é¸æŠ
+2) ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰æ¤œç´¢ã§è¤‡æ•°è«–æ–‡ãŒãƒ’ãƒƒãƒˆã—ãŸå ´åˆã€ã™ã¹ã¦ã®æ¤œç´¢çµæœã‚’è¡¨ç¤ºã™ã‚‹
 */
 
 #define HANDLE_DLG_MSG(hwnd, msg, fn) \
@@ -23,7 +23,7 @@
 
 using namespace std;
 
-// ƒvƒƒgƒ^ƒCƒvéŒ¾
+// ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€
 LRESULT CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL SetDlgPosCenter(HWND);
@@ -32,20 +32,20 @@ LRESULT CALLBACK childDlgProc(HWND, UINT, WPARAM, LPARAM);
 bool IsStrSpace(TCHAR*);
 
 BOOL SetDlgPosCenter(HWND hwnd) {
-	RECT    rc1;        // ƒfƒXƒNƒgƒbƒv—Ìˆæ
-	RECT    rc2;        // ƒEƒCƒ“ƒhƒE—Ìˆæ
-	INT     cx, cy;     // ƒEƒCƒ“ƒhƒEˆÊ’u
-	INT     sx, sy;     // ƒEƒCƒ“ƒhƒEƒTƒCƒY
+	RECT    rc1;        // ãƒ‡ã‚¹ã‚¯ãƒˆãƒƒãƒ—é ˜åŸŸ
+	RECT    rc2;        // ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦é ˜åŸŸ
+	INT     cx, cy;     // ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ä½ç½®
+	INT     sx, sy;     // ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚º
 
-	// ƒTƒCƒY‚Ìæ“¾
-	GetMonitorRect(&rc1);                            // ƒfƒXƒNƒgƒbƒv‚ÌƒTƒCƒY
-	GetWindowRect(hwnd, &rc2);                            // ƒEƒCƒ“ƒhƒE‚ÌƒTƒCƒY
-	// ‚¢‚ë‚¢‚ë‚ÆŒvZ
-	sx = (rc2.right - rc2.left);                            // ƒEƒCƒ“ƒhƒE‚Ì‰¡•
-	sy = (rc2.bottom - rc2.top);                            // ƒEƒCƒ“ƒhƒE‚Ì‚‚³
-	cx = (((rc1.right - rc1.left) - sx) / 2 + rc1.left);    // ‰¡•ûŒü‚Ì’†‰›À•W²
-	cy = (((rc1.bottom - rc1.top) - sy) / 2 + rc1.top);     // c•ûŒü‚Ì’†‰›À•W²
-	// ‰æ–Ê’†‰›‚ÉˆÚ“®
+	// ã‚µã‚¤ã‚ºã®å–å¾—
+	GetMonitorRect(&rc1);                            // ãƒ‡ã‚¹ã‚¯ãƒˆãƒƒãƒ—ã®ã‚µã‚¤ã‚º
+	GetWindowRect(hwnd, &rc2);                            // ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®ã‚µã‚¤ã‚º
+	// ã„ã‚ã„ã‚ã¨è¨ˆç®—
+	sx = (rc2.right - rc2.left);                            // ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®æ¨ªå¹…
+	sy = (rc2.bottom - rc2.top);                            // ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®é«˜ã•
+	cx = (((rc1.right - rc1.left) - sx) / 2 + rc1.left);    // æ¨ªæ–¹å‘ã®ä¸­å¤®åº§æ¨™è»¸
+	cy = (((rc1.bottom - rc1.top) - sy) / 2 + rc1.top);     // ç¸¦æ–¹å‘ã®ä¸­å¤®åº§æ¨™è»¸
+	// ç”»é¢ä¸­å¤®ã«ç§»å‹•
 	return SetWindowPos(hwnd, NULL, cx, cy, 0, 0, (SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER));
 }
 
@@ -112,7 +112,7 @@ LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 			TCHAR cBuf[SIZE];
 			HGLOBAL hg;
 			PTSTR	strMem;
-			// ƒGƒfƒBƒbƒgƒ{ƒbƒNƒX‚ª•ÏX‚³‚ê‚½ê‡
+			// ã‚¨ãƒ‡ã‚£ãƒƒãƒˆãƒœãƒƒã‚¯ã‚¹ãŒå¤‰æ›´ã•ã‚ŒãŸå ´åˆ
 			if (HIWORD(wParam) == EN_UPDATE) {
 				GetDlgItemText(hwnd, IDC_EDIT2, (TCHAR*)cBuf, sizeof(cBuf) / sizeof(TCHAR));
 				sendClip(hwnd, cBuf);
@@ -129,15 +129,15 @@ LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
-	// ƒ_ƒCƒAƒƒOƒ{ƒbƒNƒX‚Ì¶¬
+	// ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ãƒœãƒƒã‚¯ã‚¹ã®ç”Ÿæˆæ™‚
 	case WM_INITDIALOG:
-		// ƒ_ƒCƒAƒƒO‚ÌˆÊ’u‚ğ’†‰›‚ÉˆÚ“®
+		// ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ä½ç½®ã‚’ä¸­å¤®ã«ç§»å‹•
 		SetDlgPosCenter(hwnd);
 
-		// WM_DROPFILESƒƒbƒZ[ƒW‚ğˆ—‚·‚é‚æ‚¤‚É‚·‚é
+		// WM_DROPFILESãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å‡¦ç†ã™ã‚‹ã‚ˆã†ã«ã™ã‚‹
 		DragAcceptFiles(hwnd, TRUE);
 
-		// ƒNƒŠƒbƒvƒ{[ƒh‚ğƒRƒs[‚µ‚Ä“ü—Í—“‚Éƒy[ƒXƒg
+		// ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã‚’ã‚³ãƒ”ãƒ¼ã—ã¦å…¥åŠ›æ¬„ã«ãƒšãƒ¼ã‚¹ãƒˆ
 		HGLOBAL hg;
 		PTSTR strText, strClip;
 		
@@ -151,53 +151,53 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			CloseClipboard();
 		}
 
-		// ¶ã‚ÉƒAƒCƒRƒ“•\¦
+		// å·¦ä¸Šã«ã‚¢ã‚¤ã‚³ãƒ³è¡¨ç¤º
 		HICON hIcon;
 		hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP), IMAGE_ICON, 16, 16, 0);
 		SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 		break;
 
-	// PDF‚ğƒhƒ‰ƒbƒO•ƒhƒƒbƒv‚ÉÀs
+	// PDFã‚’ãƒ‰ãƒ©ãƒƒã‚°ï¼†ãƒ‰ãƒ­ãƒƒãƒ—æ™‚ã«å®Ÿè¡Œ
 	case WM_DROPFILES:
 	{
 		HDROP hDrop;
 		UINT uFileNo;
 		static TCHAR dFile[SIZE];
 		HANDLE hFile;
-		hDrop = (HDROP)wParam; // ƒhƒƒbƒv‚³‚ê‚½ƒtƒ@ƒCƒ‹”
+		hDrop = (HDROP)wParam; // ãƒ‰ãƒ­ãƒƒãƒ—ã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«æ•°
 		uFileNo = DragQueryFile((HDROP)wParam, -1, NULL, 0);
 		WCHAR* dFileName;
 		WCHAR* dFileNameExtension;
 
-		// •¡”‚ÌPDF‚ğƒhƒ‰ƒbƒO•ƒhƒƒbƒv‚µ‚½iƒGƒ‰[j
+		// è¤‡æ•°ã®PDFã‚’ãƒ‰ãƒ©ãƒƒã‚°ï¼†ãƒ‰ãƒ­ãƒƒãƒ—ã—ãŸæ™‚ï¼ˆã‚¨ãƒ©ãƒ¼ï¼‰
 		if (uFileNo > 1)
-			MessageBox(hwnd, TEXT("ƒtƒ@ƒCƒ‹‚ğŠJ‚¯‚Ü‚¹‚ñ‚Å‚µ‚½"), TEXT("ƒGƒ‰["), MB_OK);
+			MessageBox(hwnd, TEXT("ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã‘ã¾ã›ã‚“ã§ã—ãŸ"), TEXT("ã‚¨ãƒ©ãƒ¼"), MB_OK);
 
-		// 1‚Â‚ÌPDF‚ğƒhƒ‰ƒbƒO•ƒhƒƒbƒv‚µ‚½‚ÉÀs
+		// 1ã¤ã®PDFã‚’ãƒ‰ãƒ©ãƒƒã‚°ï¼†ãƒ‰ãƒ­ãƒƒãƒ—ã—ãŸæ™‚ã«å®Ÿè¡Œ
 		else {
 			DragQueryFile(hDrop, 0, dFile, sizeof(dFile));
 			hFile = CreateFile(dFile,GENERIC_READ,0,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-			// —LŒø‚Èƒtƒ@ƒCƒ‹‚©ƒ`ƒFƒbƒN‚µ‚Ä‚©‚çÀs
+			// æœ‰åŠ¹ãªãƒ•ã‚¡ã‚¤ãƒ«ã‹ãƒã‚§ãƒƒã‚¯ã—ã¦ã‹ã‚‰å®Ÿè¡Œ
 			if (hFile != INVALID_HANDLE_VALUE) {
 				CloseHandle(hFile);
-				dFileName = PathFindFileName(dFile); // ƒtƒ@ƒCƒ‹–¼
-				dFileNameExtension = PathFindExtension(dFile); // .‚ğŠÜ‚ß‚½ƒtƒ@ƒCƒ‹‚ÌŠg’£q
+				dFileName = PathFindFileName(dFile); // ãƒ•ã‚¡ã‚¤ãƒ«å
+				dFileNameExtension = PathFindExtension(dFile); // .ã‚’å«ã‚ãŸãƒ•ã‚¡ã‚¤ãƒ«ã®æ‹¡å¼µå­
 				wchar_t ext[] = L".pdf";
 				wchar_t Ext[] = L".PDF";
 				const wchar_t* p = wcsstr(dFileNameExtension, ext);
 				const wchar_t* P = wcsstr(dFileNameExtension, Ext);
-				// ƒhƒ‰ƒbƒO•ƒhƒƒbƒv‚µ‚½ƒtƒ@ƒCƒ‹‚ÌŠg’£q‚ª.pdf‚à‚µ‚­‚Í.PDF‚©‚ğ”»’è
+				// ãƒ‰ãƒ©ãƒƒã‚°ï¼†ãƒ‰ãƒ­ãƒƒãƒ—ã—ãŸãƒ•ã‚¡ã‚¤ãƒ«ã®æ‹¡å¼µå­ãŒ.pdfã‚‚ã—ãã¯.PDFã‹ã‚’åˆ¤å®š
 				if ((p == NULL)&(P == NULL))
-					MessageBox(hwnd, TEXT("PDF‚Ì‚İ‘I‘ğ‰Â”\‚Å‚·"), TEXT("ƒGƒ‰["), MB_OK);
+					MessageBox(hwnd, TEXT("PDFã®ã¿é¸æŠå¯èƒ½ã§ã™"), TEXT("ã‚¨ãƒ©ãƒ¼"), MB_OK);
 				else {
-					char* dfileName = wcharToChar(dFileName); // WCHAR*Œ^‚©‚çchar*Œ^‚Ö‚Ì•ÏŠ·
-					string newFileName = searchPubmedKeyword(dfileName); // Pubmed‚ÅƒL[ƒ[ƒhŒŸõ
-					const char* nfn = newFileName.c_str(); // stringŒ^‚©‚çconst char*Œ^‚Ö‚Ì•ÏŠ·
-					WCHAR* Nfn = charToWchar(nfn); // char*Œ^‚©‚çWCHAR*Œ^‚Ö‚Ì•ÏŠ·
-					sendClip(hwnd, Nfn); // ƒNƒŠƒbƒvƒ{[ƒh‚ÉŒŸõŒ‹‰Ê‚ğ“]‘—
+					char* dfileName = wcharToChar(dFileName); // WCHAR*å‹ã‹ã‚‰char*å‹ã¸ã®å¤‰æ›
+					string newFileName = searchPubmedKeyword(dfileName); // Pubmedã§ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰æ¤œç´¢
+					const char* nfn = newFileName.c_str(); // stringå‹ã‹ã‚‰const char*å‹ã¸ã®å¤‰æ›
+					WCHAR* Nfn = charToWchar(nfn); // char*å‹ã‹ã‚‰WCHAR*å‹ã¸ã®å¤‰æ›
+					sendClip(hwnd, Nfn); // ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã«æ¤œç´¢çµæœã‚’è»¢é€
 					//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
-					SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn); // ƒAƒvƒŠ‰º‘¤‚ÌƒGƒfƒBƒbƒgƒRƒ“ƒgƒ[ƒ‹‚ÉŒŸõŒ‹‰Ê‚ğƒy[ƒXƒg
+					SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn); // ã‚¢ãƒ—ãƒªä¸‹å´ã®ã‚¨ãƒ‡ã‚£ãƒƒãƒˆã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã«æ¤œç´¢çµæœã‚’ãƒšãƒ¼ã‚¹ãƒˆ
 				}
 			}
 		}
@@ -213,9 +213,9 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		PostQuitMessage(0);
 		break;
 
-	// ƒVƒXƒeƒ€ƒL[ˆÈŠO‚ÌƒL[ƒ{[ƒh‚ª‰Ÿ‚³‚ê‚½
+	// ã‚·ã‚¹ãƒ†ãƒ ã‚­ãƒ¼ä»¥å¤–ã®ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ãŒæŠ¼ã•ã‚ŒãŸæ™‚
 	case WM_KEYDOWN:
-		// Ctrl+A‚ğ‰Ÿ‚µ‚½‚Æ‚«‚ÉÀsi‚¤‚Ü‚­‚¢‚Á‚Ä‚È‚¢‚½‚ßmust fixj
+		// Ctrl+Aã‚’æŠ¼ã—ãŸã¨ãã«å®Ÿè¡Œï¼ˆã†ã¾ãã„ã£ã¦ãªã„ãŸã‚must fixï¼‰
 		if (LOWORD(wParam) == VK_A) {
 			if (GetKeyState(VK_CONTROL) < 0) {
 				int nCount;
@@ -225,7 +225,7 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		}
 		break;
 
-	// ƒ_ƒCƒAƒƒO‚É‘Î‚µ‚Ä‰½‚©‚µ‚ç‚Ì‘€ì‚ªs‚í‚ê‚½
+	// ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã«å¯¾ã—ã¦ä½•ã‹ã—ã‚‰ã®æ“ä½œãŒè¡Œã‚ã‚ŒãŸæ™‚
 	case WM_COMMAND:
 		{
 			INT iCheck;
@@ -233,13 +233,13 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			wmId = LOWORD(wParam);
 
 			switch (wmId) {
-			// ƒtƒ@ƒCƒ‹>I—¹‚ğ‘I‘ğ
+			// ãƒ•ã‚¡ã‚¤ãƒ«>çµ‚äº†ã‚’é¸æŠæ™‚
 			case IDM_FILE_EXIT:
 				
 				EndDialog(hwnd, IDM_FILE_EXIT);
 				break;
 
-			// ƒwƒ‹ƒv>‘€ì•û–@‚ğ‘I‘ğ
+			// ãƒ˜ãƒ«ãƒ—>æ“ä½œæ–¹æ³•ã‚’é¸æŠæ™‚
 			case IDM_HELP_ABOUT:
 				{
 				TCHAR hCap[SIZE];
@@ -252,71 +252,71 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				break;
 			}
 
-			// ƒtƒ@ƒCƒ‹>ŠJ‚­‚ğ‘I‘ğ
+			// ãƒ•ã‚¡ã‚¤ãƒ«>é–‹ãã‚’é¸æŠæ™‚
 			case IDM_FILE_OPEN:
 			{
 				TCHAR szFile[SIZE];
-				// ‘I‘ğ‚µ‚½˜_•¶PDF‚Ìƒtƒ@ƒCƒ‹‚Ìƒtƒ‹ƒpƒX‚ğæ“¾‚µ‚Äƒoƒbƒtƒ@[‚ÉŠi”[
+				// é¸æŠã—ãŸè«–æ–‡PDFã®ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ãƒ«ãƒ‘ã‚¹ã‚’å–å¾—ã—ã¦ãƒãƒƒãƒ•ã‚¡ãƒ¼ã«æ ¼ç´
 				if (getFileName(0, szFile, SIZE, _TEXT("C:\\"))) {
 					WCHAR* szFileName;
-					szFileName = PathFindFileName(szFile); // ƒtƒ@ƒCƒ‹‚Ìƒtƒ‹ƒpƒX‚©‚çƒtƒ@ƒCƒ‹–¼‚Ì‚İ‚ğæ“¾
-					char* szfileName = wcharToChar(szFileName); // WCHAR*Œ^‚©‚çchar*Œ^‚Ö‚Ì•ÏŠ·
-					string newFileName = searchPubmedKeyword(szfileName); // Pubmed‚ÅƒL[ƒ[ƒhŒŸõ
+					szFileName = PathFindFileName(szFile); // ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ãƒ«ãƒ‘ã‚¹ã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«åã®ã¿ã‚’å–å¾—
+					char* szfileName = wcharToChar(szFileName); // WCHAR*å‹ã‹ã‚‰char*å‹ã¸ã®å¤‰æ›
+					string newFileName = searchPubmedKeyword(szfileName); // Pubmedã§ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰æ¤œç´¢
 					const char* nfn = newFileName.c_str();
-					WCHAR* Nfn = charToWchar(nfn); // char*Œ^‚©‚çWCHAR*Œ^‚Ö‚Ì•ÏŠ·
-					sendClip(hwnd, Nfn); // ƒNƒŠƒbƒvƒ{[ƒh‚ÉŒŸõŒ‹‰Ê‚ğ“]‘—
+					WCHAR* Nfn = charToWchar(nfn); // char*å‹ã‹ã‚‰WCHAR*å‹ã¸ã®å¤‰æ›
+					sendClip(hwnd, Nfn); // ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã«æ¤œç´¢çµæœã‚’è»¢é€
 					//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
-					SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn); // ƒAƒvƒŠ‰º‘¤‚ÌƒGƒfƒBƒbƒgƒRƒ“ƒgƒ[ƒ‹‚ÉŒŸõŒ‹‰Ê‚ğƒy[ƒXƒg
+					SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn); // ã‚¢ãƒ—ãƒªä¸‹å´ã®ã‚¨ãƒ‡ã‚£ãƒƒãƒˆã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã«æ¤œç´¢çµæœã‚’ãƒšãƒ¼ã‚¹ãƒˆ
 				}
 				break;
 			}
 
-			// u“ü—Í—“‚ğíœvƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚½
+			// ã€Œå…¥åŠ›æ¬„ã‚’å‰Šé™¤ã€ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ãŸæ™‚
 			case IDC_DEL:
 				SendMessage(GetDlgItem(hwnd, IDC_EDIT1), EM_SETSEL, 0, -1);
 				SendMessage(GetDlgItem(hwnd, IDC_EDIT1), WM_CLEAR, 0, 0);
 				break;
 
-			// uƒNƒŠƒbƒvƒ{[ƒh‚©‚çŒŸõvƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚½
+			// ã€Œã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã‹ã‚‰æ¤œç´¢ã€ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ãŸæ™‚
 			case IDC_SEARCH:
 			{
 				HGLOBAL hg;
 				PTSTR strText, strClip;
-				// ƒNƒŠƒbƒvƒ{[ƒh‚ğƒRƒs[‚µ‚ÄPubmedŒŸõ
+				// ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã‚’ã‚³ãƒ”ãƒ¼ã—ã¦Pubmedæ¤œç´¢
 				if (OpenClipboard(hwnd) && (hg = GetClipboardData(CF_UNICODETEXT))) {
 					strText = (PTSTR)malloc(GlobalSize(hg));
 					strClip = (PTSTR)GlobalLock(hg);
 					lstrcpy(strText, strClip);
 					GlobalUnlock(hg);
 
-					// ƒNƒŠƒbƒvƒ{[ƒh‚Ì“à—e‚ª”šiPMIDj‚¾‚Á‚½ê‡
+					// ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã®å†…å®¹ãŒæ•°å­—ï¼ˆPMIDï¼‰ã ã£ãŸå ´åˆ
 					int	nValue;
 					if (nValue = ::_ttoi(strText)) {
 						char* paperIdChar = wcharToChar(strText);
 						string paperId = paperIdChar;
 						try {
-							string newFileName = searchPubmedId(paperId); // PMID‚ÅŒŸõ‚ğÀs
+							string newFileName = searchPubmedId(paperId); // PMIDã§æ¤œç´¢ã‚’å®Ÿè¡Œ
 							const char* nfn = newFileName.c_str();
-							WCHAR* Nfn = charToWchar(nfn); // char*Œ^‚©‚çWCHAR*Œ^‚Ö‚Ì•ÏŠ·
+							WCHAR* Nfn = charToWchar(nfn); // char*å‹ã‹ã‚‰WCHAR*å‹ã¸ã®å¤‰æ›
 							sendClip(hwnd, Nfn);
 							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
 							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
 						}
-						catch (...) { MessageBox(hwnd, TEXT("‚±‚ÌŒŸõŒ‹‰Ê‚Í–³Œø‚Å‚·"), TEXT("ƒGƒ‰["), MB_OK); }
+						catch (...) { MessageBox(hwnd, TEXT("ã“ã®æ¤œç´¢çµæœã¯ç„¡åŠ¹ã§ã™"), TEXT("ã‚¨ãƒ©ãƒ¼"), MB_OK); }
 
 					}
 					else {
-						// ˜_•¶–¼‚ÅŒŸõ‚ğÀs
+						// è«–æ–‡åã§æ¤œç´¢ã‚’å®Ÿè¡Œ
 						char* szfileName = wcharToChar(strText);
 						try {
 							string newFileName = searchPubmedKeyword(szfileName);
 							const char* nfn = newFileName.c_str();
-							WCHAR* Nfn = charToWchar(nfn); // char*Œ^‚©‚çWCHAR*Œ^‚Ö‚Ì•ÏŠ·
+							WCHAR* Nfn = charToWchar(nfn); // char*å‹ã‹ã‚‰WCHAR*å‹ã¸ã®å¤‰æ›
 							sendClip(hwnd, Nfn);
 							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
 							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
 						}
-						catch (...) { MessageBox(hwnd, TEXT("‚±‚ÌŒŸõŒ‹‰Ê‚Í–³Œø‚Å‚·"), TEXT("ƒGƒ‰["), MB_OK); }
+						catch (...) { MessageBox(hwnd, TEXT("ã“ã®æ¤œç´¢çµæœã¯ç„¡åŠ¹ã§ã™"), TEXT("ã‚¨ãƒ©ãƒ¼"), MB_OK); }
 
 					}
 
@@ -326,43 +326,43 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				break;
 			}
 
-			// u“ü—Í—“‚©‚çŒŸõvƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚½
+			// ã€Œå…¥åŠ›æ¬„ã‹ã‚‰æ¤œç´¢ã€ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ãŸæ™‚
 			case IDOK:
 			{
 				TCHAR szBuf[SIZE];
-				// ŒŸõƒ{ƒ^ƒ“‚ğÀs
+				// æ¤œç´¢ãƒœã‚¿ãƒ³ã‚’å®Ÿè¡Œæ™‚
 				GetDlgItemText(hwnd, IDC_EDIT1, szBuf, (int)sizeof(szBuf));
 				if (IsStrSpace(szBuf))
-					MessageBox(hwnd, TEXT("PMID‚à‚µ‚­‚Í˜_•¶–¼iƒL[ƒ[ƒhj‚ğ“ü—Í‚µ‚Ä‚­‚¾‚³‚¢"), TEXT("ƒGƒ‰["), MB_OK);
+					MessageBox(hwnd, TEXT("PMIDã‚‚ã—ãã¯è«–æ–‡åï¼ˆã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ï¼‰ã‚’å…¥åŠ›ã—ã¦ãã ã•ã„"), TEXT("ã‚¨ãƒ©ãƒ¼"), MB_OK);
 				else {
 					int	nValue;
 					if (nValue = ::_ttoi(szBuf)) {
-						// PMID‚ÅŒŸõ‚ğÀs
+						// PMIDã§æ¤œç´¢ã‚’å®Ÿè¡Œ
 						char* paperIdChar = wcharToChar(szBuf);
 						string paperId = paperIdChar;
 						try {
 							string newFileName = searchPubmedId(paperId);
 							const char* nfn = newFileName.c_str();
-							WCHAR* Nfn = charToWchar(nfn); // char*Œ^‚©‚çWCHAR*Œ^‚Ö‚Ì•ÏŠ·
+							WCHAR* Nfn = charToWchar(nfn); // char*å‹ã‹ã‚‰WCHAR*å‹ã¸ã®å¤‰æ›
 							sendClip(hwnd, Nfn);
 							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
 							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
 						}
-						catch (...){ MessageBox(hwnd, TEXT("‚±‚ÌŒŸõŒ‹‰Ê‚Í–³Œø‚Å‚·"), TEXT("ƒGƒ‰["), MB_OK); }
+						catch (...){ MessageBox(hwnd, TEXT("ã“ã®æ¤œç´¢çµæœã¯ç„¡åŠ¹ã§ã™"), TEXT("ã‚¨ãƒ©ãƒ¼"), MB_OK); }
 						
 					}
 					else {
-						// ˜_•¶–¼‚ÅŒŸõ‚ğÀs
+						// è«–æ–‡åã§æ¤œç´¢ã‚’å®Ÿè¡Œ
 						char* szfileName = wcharToChar(szBuf);
 						try {
 							string newFileName = searchPubmedKeyword(szfileName);
 							const char* nfn = newFileName.c_str();
-							WCHAR* Nfn = charToWchar(nfn); // char*Œ^‚©‚çWCHAR*Œ^‚Ö‚Ì•ÏŠ·
+							WCHAR* Nfn = charToWchar(nfn); // char*å‹ã‹ã‚‰WCHAR*å‹ã¸ã®å¤‰æ›
 							sendClip(hwnd, Nfn);
 							//DialogBox((HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), TEXT("CHILD"), hwnd, (DLGPROC)childDlgProc);
 							SetWindowText(GetDlgItem(hwnd, IDC_EDIT3), Nfn);
 						}
-						catch (...){ MessageBox(hwnd, TEXT("‚±‚ÌŒŸõŒ‹‰Ê‚Í–³Œø‚Å‚·"), TEXT("ƒGƒ‰["), MB_OK); }
+						catch (...){ MessageBox(hwnd, TEXT("ã“ã®æ¤œç´¢çµæœã¯ç„¡åŠ¹ã§ã™"), TEXT("ã‚¨ãƒ©ãƒ¼"), MB_OK); }
 						
 					}
 				}
@@ -420,16 +420,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 	return msg.wParam;
 }
 
-// ”¼Šp‹ó”’•¶š,‘SŠp‹ó”’•¶š‚Ìƒ`ƒFƒbƒN
+// åŠè§’ç©ºç™½æ–‡å­—,å…¨è§’ç©ºç™½æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯
 bool IsStrSpace(TCHAR* str) {
 	StrTrim(str, L" ");
 	const size_t textSize = 256;
 	char lpcText[textSize];
 	WideCharToMultiByte(CP_ACP, 0, str, -1, lpcText, textSize, NULL, NULL);
 	char* pPoint = lpcText;
-	bool bSpace = TRUE; // •¶š—ñ‚ªw‘SŠpƒXƒy[ƒXx–”‚Íw”¼ŠpƒXƒy[ƒXx‚Ì‚İ‚Å\¬‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©
+	bool bSpace = TRUE; // æ–‡å­—åˆ—ãŒã€å…¨è§’ã‚¹ãƒšãƒ¼ã‚¹ã€åˆã¯ã€åŠè§’ã‚¹ãƒšãƒ¼ã‚¹ã€ã®ã¿ã§æ§‹æˆã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹
 	while (*pPoint != '\0') {
-		if (!memcmp(pPoint, "@", 2)) {
+		if (!memcmp(pPoint, "ã€€", 2)) {
 			pPoint += 2;
 		}
 		else if (!memcmp(pPoint, " ", 1)) {
