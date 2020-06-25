@@ -7,12 +7,14 @@
 #define IDC_RADIO2    1020
 #define IDC_EDIT1	1030
 #define IDC_EDIT2	1040
-#define IDC_EDIT3	10451
+#define IDC_EDIT3	1045
 #define IDC_LABEL	1050
 #define IDC_SEARCH	1060
 #define IDC_DEL	1065
 #define IDC_STATIC1    1070
-#define IDC_STATIC2    1070
+#define IDC_STATIC2    1080
+#define IDC_STATIC3    1090
+
 
 // Menu Item ID
 #define IDM_FILE_OPEN    2000

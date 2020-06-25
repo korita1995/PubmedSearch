@@ -1,5 +1,5 @@
-#ifndef INCLUDE_PAPER_LABELING_H
-#define INCLUDE_PAPER_LABELING_H
+#ifndef INCLUDE_PUBMED_SEARCH_UTILS_H
+#define INCLUDE_PUBMED_SEARCH_UTILS_H
 #include <iostream>
 #include <string>
 #include <windows.h>

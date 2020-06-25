@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <nlohmann/json.hpp>
 #include <curl/curl.h> 
-#include "paperLabeling.h"
+#include "PubmedSearchUtils.h"
 
 
 #define SIZE 1000
@@ -115,7 +115,13 @@ string searchPubmedId(string uid) {
     int pos2 = lastAuthor.find(' ');
     c = lastAuthor.substr(0, pos2);
     d = lastAuthor.substr((unsigned __int64)pos2 + 1);
-    string paperTitle = j["title"];
+    string papertitle = j["title"];
+    size_t nCount = papertitle.size() -1;
+    // 論文名末尾の「.」を削除
+    if (papertitle[nCount] == '.')
+        papertitle.pop_back();
+    string paperTitle = regex_replace(papertitle, regex("[\\/:\*\?\"\'<>\|]"),""); // replace "" to ""
+    //string PaperTitle = regex_replace(paperTitle, regex("[\^\\s\\w]"), ""); // replace "" to ""
     string journalName = j["source"];
     string PubDate = j["pubdate"];
     string PubYear = PubDate.substr(0, 4);
