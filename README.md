@@ -1,4 +1,4 @@
-# PubmedSearch
+# PubmedSearch2FileName
 論文名 or PMID or DOIで論文検索して、規定のフォーマットで論文情報を取得するWindowsアプリ  
 PubmedSearch2FileName.exe ファイルをダウンロードするだけで実行可能です。  
 （Visual Studio 2019 をインストールしていなくても実行可能）
