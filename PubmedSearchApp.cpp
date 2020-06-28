@@ -12,6 +12,7 @@
 1) Ctrl+Aで入力欄を全選択
 2) キーワード検索で複数論文がヒットした場合、すべての検索結果を表示する
 3) 論文ファイル名のトリミングをウムラウトなどの特殊文字に対応
+4) ヘルプを表示するメッセージボックスのサイズを変更する（）
 */
 
 #define GetMonitorRect(rc)  SystemParametersInfo(SPI_GETWORKAREA,0,rc,0)
@@ -82,8 +83,8 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 		//ウィンドウのサブクラス化
-		OrghEdit1 = (DLGPROC)GetWindowLongPtr(hEdit1, DWLP_DLGPROC);
-		SetWindowLongPtr(hEdit1, DWLP_DLGPROC, (LONG)Edit1Proc);
+		//OrghEdit1 = (DLGPROC)GetWindowLongPtr(hEdit1, DWLP_DLGPROC);
+		//SetWindowLongPtr(hEdit1, DWLP_DLGPROC, (LONG)Edit1Proc);
 
 		HGLOBAL hg;
 		PTSTR strText, strClip;
@@ -106,8 +107,9 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				GlobalUnlock(hg);
 				SetWindowText(hEdit1, strText);
 				// クリップボードの内容が数字（PMID）だった場合
-				int	nValue;
-				if (nValue = ::_ttoi(strText)) {
+				//int	nValue;
+				//if (nValue = ::_ttoi(strText)) {
+				if (checkPMID(strText)) {
 					char* paperIdChar = wcharToChar(strText);
 					string paperId = paperIdChar;
 					try {
@@ -159,7 +161,6 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	// PDFをドラッグ＆ドロップ時に実行
 	case WM_DROPFILES:
 	{
-		SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT(""));
 		SetWindowText(hEdit3, TEXT(""));
 		HDROP hDrop;
 		UINT uFileNo;
@@ -239,7 +240,6 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		// ダイアログに対して何かしらの操作が行われた時
 	case WM_COMMAND:
 	{
-		INT iCheck;
 		UINT wmId;
 		wmId = LOWORD(wParam);
 
@@ -266,7 +266,6 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		// ファイル>開くを選択時
 		case IDM_FILE_OPEN:
 		{
-			SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT(""));
 			SetWindowText(hEdit3, TEXT(""));
 			TCHAR szFile[SIZE];
 			// 選択した論文PDFのファイルのフルパスを取得してバッファーに格納
@@ -297,9 +296,8 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 
 			// 「クリップボードから検索」ボタンを押した時
-		case IDC_SEARCH:
+		case IDC_CLIP_SEARCH:
 		{
-			SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT(""));
 			SetWindowText(hEdit3, TEXT(""));
 			HGLOBAL hg;
 			PTSTR strText, strClip;
@@ -312,8 +310,9 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				SetWindowText(hEdit1, strText);
 
 				// クリップボードの内容が数字（PMID）だった場合
-				int	nValue;
-				if (nValue = ::_ttoi(strText)) {
+				//int	nValue;
+				//if (nValue = ::_ttoi(strText)) {
+				if (checkPMID(strText)) {
 					char* paperIdChar = wcharToChar(strText);
 					string paperId = paperIdChar;
 					try {
@@ -351,7 +350,6 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		// 「入力欄から検索」ボタンを押した時
 		case IDOK:
 		{
-			SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT(""));
 			SetWindowText(hEdit3, TEXT(""));
 			TCHAR szBuf[SIZE];
 			// 検索ボタンを実行時
@@ -363,11 +361,12 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			}
 
 			else {
-				int	nValue;
-				if (nValue = ::_ttoi(szBuf)) {
+				//int	nValue;
+				//if (nValue = ::_ttoi(szBuf)) {
+				if (checkPMID(szBuf)){
 					// PMIDで検索を実行
 					char* paperIdChar = wcharToChar(szBuf);
-					string paperId = paperIdChar;
+					string paperId = string(paperIdChar);
 					try {
 						string newFileName = searchPubmedId(paperId);
 						setSearchResult(hwnd, hEdit3, newFileName);
@@ -384,7 +383,12 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 					char* szfileName = wcharToChar(szBuf);
 					try {
 						string newFileName = searchPubmedKeyword(szfileName);
-						setSearchResult(hwnd, hEdit3, newFileName);
+						//string newFileName = exactSearchPubmedKeyword(szfileName);
+						//string newFileName = searchCrossrefKeyword(szfileName);
+						if (newFileName == "")
+							SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
+						else
+							setSearchResult(hwnd, hEdit3, newFileName);
 					}
 					catch (...) {
 						//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
@@ -393,6 +397,62 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 					}
 
 				}
+			}
+			break;
+		}
+
+		case IDC_EXACT_SEARCH:
+		{
+			SetWindowText(hEdit3, TEXT(""));
+			TCHAR szBuf[SIZE];
+			// 検索ボタンを実行時
+			GetDlgItemText(hwnd, IDC_EDIT1, szBuf, (int)sizeof(szBuf));
+			if (isStrSpace(szBuf)) {
+				SetWindowText(hEdit3, TEXT("エラー: PMIDもしくは論文名（キーワード）を入力してください"));
+			}
+			else {
+				char* szfileName = wcharToChar(szBuf);
+				try {
+					string newFileName = exactSearchPubmedKeyword(szfileName);
+					if (newFileName == "")
+						SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
+					else
+						setSearchResult(hwnd, hEdit3, newFileName);
+				}
+				catch (...) {
+					//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
+					//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+					SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
+				}
+			}
+			break;
+		}
+
+		case IDC_CROSSREF_SEARCH:
+		{
+			SetWindowText(hEdit3, TEXT(""));
+			TCHAR dzBuf[SIZE];
+			// 検索ボタンを実行時
+			GetDlgItemText(hwnd, IDC_EDIT1, dzBuf, (int)sizeof(dzBuf));
+			if (isStrSpace(dzBuf)) {
+				SetWindowText(hEdit3, TEXT("エラー: DOIもしくは論文名（キーワード）を入力してください"));
+			}
+			else {
+				char* dzfileName = wcharToChar(dzBuf);
+				try {
+					if (string(dzfileName).find("/") != string::npos) {
+						string newFileName = searchCrossrefDoi(dzfileName);
+						setSearchResult(hwnd, hEdit3, newFileName);
+					}
+					else {
+						string newFileName = searchCrossrefKeyword(dzfileName);
+						setSearchResult(hwnd, hEdit3, newFileName);
+					}
+				}
+				catch (...) {
+					SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
+				}
+
 			}
 			break;
 		}
@@ -435,8 +495,6 @@ LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		switch (LOWORD(wParam)) {
 		case IDC_EDIT2:
 			TCHAR cBuf[SIZE];
-			HGLOBAL hg;
-			PTSTR	strMem;
 			// エディットボックスが変更された場合
 			if (HIWORD(wParam) == EN_UPDATE) {
 				GetDlgItemText(hwnd, IDC_EDIT2, (TCHAR*)cBuf, sizeof(cBuf) / sizeof(TCHAR));

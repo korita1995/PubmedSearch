@@ -9,11 +9,12 @@
 #define IDC_EDIT2	1040
 #define IDC_EDIT3	1045
 #define IDC_LABEL	1050
-#define IDC_SEARCH	1060
-#define IDC_DEL	1065
+#define IDC_CLIP_SEARCH	1060
+#define IDC_DEL		1065
 #define IDC_STATIC1    1070
 #define IDC_STATIC2    1080
-#define IDC_STATIC3    1090
+#define IDC_EXACT_SEARCH	1090
+#define IDC_CROSSREF_SEARCH	1100
 
 
 // Menu Item ID
