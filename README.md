@@ -1,6 +1,6 @@
 # PubmedSearch
-PubmedをIDもしくは論文名で検索して、規定のフォーマットで論文情報を取得するプログラム（Windows用）  
-PubmedSearch.exe ファイルをダウンロードするだけで実行可能です。  
+論文名 or PMID or DOIで論文検索して、規定のフォーマットで論文情報を取得するWindowsアプリ  
+PubmedSearch2FileName.exe ファイルをダウンロードするだけで実行可能です。  
 （Visual Studio 2019 をインストールしていなくても実行可能）
 
 # Visual studio 2019 でビルドする方法(64bit用, Release版)
