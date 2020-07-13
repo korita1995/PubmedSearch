@@ -6,13 +6,14 @@
 #include <shlwapi.h>
 #include "PubmedSearchUtils.h"
 #include "PubmedSearchApp.h"
+#include <regex>
 
 /*
 実装すべき機能 (2020/6/24)
 1) Ctrl+Aで入力欄を全選択
 2) キーワード検索で複数論文がヒットした場合、すべての検索結果を表示する
 3) 論文ファイル名のトリミングをウムラウトなどの特殊文字に対応
-4) ヘルプを表示するメッセージボックスのサイズを変更する（）
+4) ヘルプを表示するメッセージボックスのサイズを変更する
 */
 
 #define GetMonitorRect(rc)  SystemParametersInfo(SPI_GETWORKAREA,0,rc,0)
@@ -26,6 +27,10 @@ HINSTANCE hInst;	// 現在のインターフェイス
 HWND hDlgCurrent;	// ダイアログのハンドル
 HWND hEdit1;	// 入力欄のハンドル
 HWND hEdit3;	// 検索結果欄のハンドル
+HWND button1;
+HWND button2;
+HWND button3;
+HWND button4;
 TCHAR* commandLineArg;
 DLGPROC OrghEdit1, OrghEdit3;   //オリジナルプロシージャのアドレス
 
@@ -52,6 +57,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		break;
 
 	case WM_CLOSE:
+		
 		DestroyWindow(hwnd);
 		break;
 
@@ -68,11 +74,17 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_INITDIALOG:
 	{
 		// ダイアログの位置を中央に移動
-		SetDlgPosCenter(hwnd);
+		//SetDlgPosCenter(hwnd);
+		loadWindowState(hwnd);
 
 		// エディットコントロールのハンドルを取得してグローバル変数に格納
 		hEdit1 = GetDlgItem(hwnd, IDC_EDIT1);
 		hEdit3 = GetDlgItem(hwnd, IDC_EDIT3);
+		button1 = GetDlgItem(hwnd, IDC_EXACT_SEARCH);
+		button2 = GetDlgItem(hwnd, IDC_CROSSREF_SEARCH);
+		button3 = GetDlgItem(hwnd, IDOK);
+		button4 = GetDlgItem(hwnd, IDC_CLIP_SEARCH);
+
 
 		// WM_DROPFILESメッセージを処理するようにする
 		DragAcceptFiles(hwnd, TRUE);
@@ -81,10 +93,6 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		HICON hIcon;
 		hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_APP), IMAGE_ICON, 16, 16, 0);
 		SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-
-		//ウィンドウのサブクラス化
-		//OrghEdit1 = (DLGPROC)GetWindowLongPtr(hEdit1, DWLP_DLGPROC);
-		//SetWindowLongPtr(hEdit1, DWLP_DLGPROC, (LONG)Edit1Proc);
 
 		HGLOBAL hg;
 		PTSTR strText, strClip;
@@ -106,13 +114,13 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				lstrcpy(strText, strClip);
 				GlobalUnlock(hg);
 				SetWindowText(hEdit1, strText);
+
 				// クリップボードの内容が数字（PMID）だった場合
-				//int	nValue;
-				//if (nValue = ::_ttoi(strText)) {
 				if (checkPMID(strText)) {
 					char* paperIdChar = wcharToChar(strText);
 					string paperId = paperIdChar;
 					try {
+						//SetWindowText(hEdit3, TEXT("PubmedでPMID検索を実行開始"));
 						string newFileName = searchPubmedId(paperId); // PMIDで検索を実行
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
@@ -126,8 +134,32 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				else {
 					// 論文名で検索を実行
 					char* szfileName = wcharToChar(strText);
+					string szfileNameStr = string(szfileName);
+					regex re("^[0-9]*\\..*/*");
+					string newFileName;
 					try {
-						string newFileName = searchPubmedKeyword(szfileName);
+						//SetWindowText(hEdit3, TEXT("Pubmedでキーワード検索を実行開始"));
+						if (szfileNameStr.find("https://doi.org/") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "https://doi.org/"s, ""s);
+						}
+						else if (szfileNameStr.find("doi: ") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "doi: "s, ""s);
+							if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+								szfileNameStr.pop_back();
+						}
+						else if (szfileNameStr.find("DOI: ") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "DOI: "s, ""s);
+							if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+								szfileNameStr.pop_back();
+						}
+						if (regex_search(szfileNameStr.c_str(), re)) {
+							newFileName = searchPubmedKeyword(szfileNameStr.c_str());
+						}
+						else {
+							szfileNameStr = replaceString(szfileNameStr, "/"s, ""s);
+							newFileName = searchPubmedKeyword(szfileNameStr.c_str());
+						}
+						//string newFileName = searchPubmedKeyword(szfileName);
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
 					catch (...) {
@@ -164,6 +196,7 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		SetWindowText(hEdit3, TEXT(""));
 		HDROP hDrop;
 		UINT uFileNo;
+		//static TCHAR dFile[SIZE] = TEXT("");
 		static TCHAR dFile[SIZE];
 		HANDLE hFile;
 		hDrop = (HDROP)wParam; // ドロップされたファイル数
@@ -175,15 +208,19 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		if (uFileNo > 1) {
 			//MessageBox(hwnd, TEXT("ファイルを開けませんでした"), TEXT("エラー"), MB_OK);
 			//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: ファイルを開けませんでした"));
-			SetWindowText(hEdit3, TEXT("エラー: ファイルを開けませんでした"));
+			SetWindowText(hEdit3, TEXT("エラー: 開けるPDFファイルは1つまでです"));
 		}
 
 		// 1つのPDFをドラッグ＆ドロップした時に実行
 		else {
 			DragQueryFile(hDrop, 0, dFile, sizeof(dFile));
+			//MessageBox(hwnd, dFile, TEXT(""), MB_OK);
 			hFile = CreateFile(dFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			Sleep(20);
 			// 有効なファイルかチェックしてから実行
 			if (hFile != INVALID_HANDLE_VALUE) {
+			//if (TRUE){
+				//MessageBox(hwnd, TEXT("ファイルを開くのに成功"), TEXT(""), MB_OK);
 				CloseHandle(hFile);
 				dFileName = PathFindFileName(dFile); // ファイル名
 				dFileNameExtension = PathFindExtension(dFile); // .を含めたファイルの拡張子
@@ -202,12 +239,16 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 					SetWindowText(hEdit1, dFileName);
 					char* dfileName = wcharToChar(dFileName); // WCHAR*型からchar*型への変換
 					try {
+						disableAllButtons();
+						//SetWindowText(hEdit3, TEXT("Pubmedでキーワード検索を実行開始"));
 						string newFileName = searchPubmedKeyword(dfileName); // Pubmedでキーワード検索
+						enableAllButtons();
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
 					catch (...) {
 						//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
 						//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+						enableAllButtons();
 						SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 					}
 
@@ -219,6 +260,7 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	}
 
 	case WM_CLOSE:
+		saveWindowState(hwnd);
 		DestroyWindow(hwnd);
 		break;
 
@@ -226,7 +268,8 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		PostQuitMessage(0);
 		break;
 
-		// システムキー以外のキーボードが押された時
+	/*
+	// システムキー以外のキーボードが押された時
 	case WM_KEYDOWN:
 		// Ctrl+Aを押したときに実行（うまくいってないためmust fix）
 		if (LOWORD(wParam) == VK_A) {
@@ -236,8 +279,9 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			}
 		}
 		break;
+	*/
 
-		// ダイアログに対して何かしらの操作が行われた時
+	// ダイアログに対して何かしらの操作が行われた時
 	case WM_COMMAND:
 	{
 		UINT wmId;
@@ -276,12 +320,16 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				PathRemoveExtension(szFileName);
 				SetWindowText(hEdit1, szFileName);
 				try {
+					//SetWindowText(hEdit3, TEXT("Pubmedでキーワード検索を実行開始"));
+					disableAllButtons();
 					string newFileName = searchPubmedKeyword(szfileName); // Pubmedでキーワード検索
+					enableAllButtons();
 					setSearchResult(hwnd, hEdit3, newFileName);
 				}
 				catch (...) {
 					//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
 					//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+					enableAllButtons();
 					SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 				}
 
@@ -310,18 +358,20 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				SetWindowText(hEdit1, strText);
 
 				// クリップボードの内容が数字（PMID）だった場合
-				//int	nValue;
-				//if (nValue = ::_ttoi(strText)) {
 				if (checkPMID(strText)) {
 					char* paperIdChar = wcharToChar(strText);
 					string paperId = paperIdChar;
 					try {
+						disableAllButtons();
+						//SetWindowText(hEdit3, TEXT("PubmedでPMID検索を実行開始"));
 						string newFileName = searchPubmedId(paperId); // PMIDで検索を実行
+						enableAllButtons();
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
 					catch (...) {
 						//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
 						//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+						enableAllButtons();
 						SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 					}
 
@@ -329,13 +379,40 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				else {
 					// 論文名で検索を実行
 					char* szfileName = wcharToChar(strText);
+					string szfileNameStr = string(szfileName);
+					regex re("^[0-9]*\\..*/*");
+					string newFileName;
 					try {
-						string newFileName = searchPubmedKeyword(szfileName);
+						//SetWindowText(hEdit3, TEXT("Pubmedでキーワード検索を実行開始"));
+						if (szfileNameStr.find("https://doi.org/") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "https://doi.org/"s, ""s);
+						}
+						else if (szfileNameStr.find("doi: ") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "doi: "s, ""s);
+							if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+								szfileNameStr.pop_back();
+						}
+						else if (szfileNameStr.find("DOI: ") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "DOI: "s, ""s);
+							if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+								szfileNameStr.pop_back();
+						}
+						disableAllButtons();
+						if (regex_search(szfileNameStr.c_str(), re)) {
+							newFileName = searchPubmedKeyword(szfileNameStr.c_str());
+						}
+						else {
+							szfileNameStr = replaceString(szfileNameStr, "/"s, ""s);
+							newFileName = searchPubmedKeyword(szfileNameStr.c_str());
+						}
+						//string newFileName = searchPubmedKeyword(szfileName);
+						enableAllButtons();
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
 					catch (...) {
 						//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
 						//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+						enableAllButtons();
 						SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 					}
 
@@ -361,19 +438,21 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			}
 
 			else {
-				//int	nValue;
-				//if (nValue = ::_ttoi(szBuf)) {
 				if (checkPMID(szBuf)){
 					// PMIDで検索を実行
 					char* paperIdChar = wcharToChar(szBuf);
 					string paperId = string(paperIdChar);
 					try {
+						//SetWindowText(hEdit3, TEXT("PubmedでPMID検索を実行開始"));
+						disableAllButtons();
 						string newFileName = searchPubmedId(paperId);
+						enableAllButtons();
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
 					catch (...) {
 						//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
 						//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+						enableAllButtons();
 						SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 					}
 
@@ -381,18 +460,49 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				else {
 					// 論文名で検索を実行
 					char* szfileName = wcharToChar(szBuf);
+					string szfileNameStr = string(szfileName);
+					regex re("^[0-9]*\\..*/*");
+					string newFileName;
 					try {
-						string newFileName = searchPubmedKeyword(szfileName);
+						//SetWindowText(hEdit3, TEXT("Pubmedでキーワード検索を実行開始"));
+						if (szfileNameStr.find("https://doi.org/") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "https://doi.org/"s, ""s);
+						}
+						else if (szfileNameStr.find("doi: ") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "doi: "s, ""s);
+							if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+								szfileNameStr.pop_back();
+						}
+						else if (szfileNameStr.find("DOI: ") != string::npos) {
+							szfileNameStr = replaceString(szfileNameStr, "DOI: "s, ""s);
+							if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+								szfileNameStr.pop_back();
+						}
+						disableAllButtons();
+						if (regex_search(szfileNameStr.c_str(), re)) {
+							newFileName = searchPubmedKeyword(szfileNameStr.c_str());
+						}
+						else {
+							szfileNameStr = replaceString(szfileNameStr, "/"s, ""s);
+							newFileName = searchPubmedKeyword(szfileNameStr.c_str());
+						}
+						//string newFileName = searchPubmedKeyword(szfileName);
 						//string newFileName = exactSearchPubmedKeyword(szfileName);
 						//string newFileName = searchCrossrefKeyword(szfileName);
-						if (newFileName == "")
+						if (newFileName == "") {
+							enableAllButtons();
 							SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
-						else
+						}
+						else {
+							enableAllButtons();
 							setSearchResult(hwnd, hEdit3, newFileName);
+						}
+							
 					}
 					catch (...) {
 						//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
 						//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+						enableAllButtons();
 						SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 					}
 
@@ -412,16 +522,46 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			}
 			else {
 				char* szfileName = wcharToChar(szBuf);
+				string szfileNameStr = string(szfileName);
+				regex re("^[0-9]*\\..*/*");
+				string newFileName;
 				try {
-					string newFileName = exactSearchPubmedKeyword(szfileName);
-					if (newFileName == "")
+					//SetWindowText(hEdit3, TEXT("Pubmedでキーワード高精度検索を実行開始"));
+					if (szfileNameStr.find("https://doi.org/") != string::npos) {
+						szfileNameStr = replaceString(szfileNameStr, "https://doi.org/"s, ""s);
+					}
+					else if (szfileNameStr.find("doi: ") != string::npos) {
+						szfileNameStr = replaceString(szfileNameStr, "doi: "s, ""s);
+						if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+							szfileNameStr.pop_back();
+					}
+					else if (szfileNameStr.find("DOI: ") != string::npos) {
+						szfileNameStr = replaceString(szfileNameStr, "DOI: "s, ""s);
+						if (szfileNameStr[szfileNameStr.size() - 1] == '.')
+							szfileNameStr.pop_back();
+					}
+					disableAllButtons();
+					if (regex_search(szfileNameStr.c_str(), re)) {
+						newFileName = exactSearchPubmedKeyword(szfileNameStr.c_str());
+					}
+					else {
+						szfileNameStr = replaceString(szfileNameStr, "/"s, ""s);
+						newFileName = exactSearchPubmedKeyword(szfileNameStr.c_str());
+					}
+					
+					if (newFileName == "") {
+						enableAllButtons();
 						SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
-					else
+					}
+					else {
+						enableAllButtons();
 						setSearchResult(hwnd, hEdit3, newFileName);
+					}
 				}
 				catch (...) {
 					//MessageBox(hwnd, TEXT("この検索結果は無効です"), TEXT("エラー"), MB_OK);
 					//SetWindowText(GetDlgItem(hwnd, IDC_STATIC3), TEXT("エラー: 文献が見つかりませんでした"));
+					enableAllButtons();
 					SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 				}
 			}
@@ -439,17 +579,39 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			}
 			else {
 				char* dzfileName = wcharToChar(dzBuf);
+				string dzfileNameStr = string(dzfileName);
+				regex re("^[0-9]*\\..*/*");
 				try {
-					if (string(dzfileName).find("/") != string::npos) {
-						string newFileName = searchCrossrefDoi(dzfileName);
+					if (dzfileNameStr.find("https://doi.org/") != string::npos) {
+						dzfileNameStr = replaceString(dzfileNameStr, "https://doi.org/"s, ""s);
+					}
+					else if (dzfileNameStr.find("doi: ") != string::npos) {
+						dzfileNameStr = replaceString(dzfileNameStr, "doi: "s, ""s);
+						if (dzfileNameStr[dzfileNameStr.size()-1] == '.')
+							dzfileNameStr.pop_back();
+					}
+					else if (dzfileNameStr.find("DOI: ") != string::npos) {
+						dzfileNameStr = replaceString(dzfileNameStr, "DOI: "s, ""s);
+						if (dzfileNameStr[dzfileNameStr.size()-1] == '.')
+							dzfileNameStr.pop_back();
+					}
+					disableAllButtons();
+					//if (string(dzfileName).find("/") != string::npos) {
+					if (regex_search(dzfileNameStr.c_str(), re)){
+						//SetWindowText(hEdit3, TEXT("CrossrefでDOI検索を実行開始"));
+						string newFileName = searchCrossrefDoi(dzfileNameStr.c_str());
+						enableAllButtons();
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
 					else {
-						string newFileName = searchCrossrefKeyword(dzfileName);
+						//SetWindowText(hEdit3, TEXT("Crossrefでキーワード検索を実行開始"));
+						string newFileName = searchCrossrefKeyword(dzfileNameStr.c_str());
+						enableAllButtons();
 						setSearchResult(hwnd, hEdit3, newFileName);
 					}
 				}
 				catch (...) {
+					enableAllButtons();
 					SetWindowText(hEdit3, TEXT("エラー: 文献が見つかりませんでした"));
 				}
 
@@ -457,67 +619,22 @@ LRESULT CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 		}
 
+		case IDC_EDIT3:
+		{
+			TCHAR cBuf[SIZE];
+			// エディットボックスが変更された場合
+			if (HIWORD(wParam) == EN_UPDATE) {
+				GetDlgItemText(hwnd, IDC_EDIT3, (TCHAR*)cBuf, sizeof(cBuf) / sizeof(TCHAR));
+				sendClip(hwnd, cBuf);
+			}
+			break;
+		}
 		default:
 			break;
 		}
 	}
 	}
 	return 0;
-}
-
-LRESULT CALLBACK childDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		SetDlgPosCenter(hwnd);
-		HGLOBAL hg;
-		PTSTR strText, strClip;
-
-		if (OpenClipboard(hwnd) && (hg = GetClipboardData(CF_UNICODETEXT))) {
-			strText = (PTSTR)malloc(GlobalSize(hg));
-			strClip = (PTSTR)GlobalLock(hg);
-			lstrcpy(strText, strClip);
-			GlobalUnlock(hg);
-			SetWindowText(GetDlgItem(hwnd, IDC_EDIT2), strText);
-			free(strText);
-			CloseClipboard();
-		}
-		break;
-
-	case WM_CLOSE:
-		EndDialog(hwnd, WM_CLOSE);
-		break;
-
-	case WM_DESTROY:
-		break;
-
-	case WM_COMMAND:
-	{
-		switch (LOWORD(wParam)) {
-		case IDC_EDIT2:
-			TCHAR cBuf[SIZE];
-			// エディットボックスが変更された場合
-			if (HIWORD(wParam) == EN_UPDATE) {
-				GetDlgItemText(hwnd, IDC_EDIT2, (TCHAR*)cBuf, sizeof(cBuf) / sizeof(TCHAR));
-				sendClip(hwnd, cBuf);
-			}
-			break;
-		}
-		break;
-	}
-	default:
-		break;
-	}
-	return 0;
-}
-
-
-LRESULT CALLBACK Edit1Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	if (msg == WM_CHAR && wParam == 1) {
-		SendMessage(hEdit1, EM_SETSEL, 0, -1);
-		return 1;
-	}
-	else
-		return CallWindowProc(OrghEdit1, hEdit1, msg, wParam, lParam);
 }
 
 // 半角空白文字,全角空白文字のチェック
@@ -583,7 +700,208 @@ void setSearchResult(HWND hwnd, HWND hEdit, string newFileName) {
 	SetWindowText(hEdit, Nfn);
 }
 
+string replaceString(string target, string from, string to) {
+	string result = target;
+	string::size_type pos = 0;
+	while (pos = result.find(from, pos), pos != string::npos) {
+		result.replace(pos, from.length(), to);
+		pos += to.length();
+	}
+	return result;
+}
 
+void enableAllButtons() {
+	EnableWindow(button1, TRUE);
+	EnableWindow(button2, TRUE);
+	EnableWindow(button3, TRUE);
+	EnableWindow(button4, TRUE);
+}
 
+void disableAllButtons() {
+	EnableWindow(button1, FALSE);
+	EnableWindow(button2, FALSE);
+	EnableWindow(button3, FALSE);
+	EnableWindow(button4, FALSE);
+}
 
+void saveRect(const RECT* pRect, HKEY hKey) {
+	LONG result;
+	TCHAR strNum[64];
+	_ltow_s(pRect->left, strNum, 10);
+	result = RegSetValueEx(
+		hKey,	// 現在オープンしているキーのハンドル
+		TEXT("left"),	// 値の「名前」が入った文字列へのポインタ
+		0,	// 予約パラメータ。0を指定する
+		REG_SZ,	// 値の「種類」を指定する。NULLで終わる文字列はREG_SZ、32ビット値はREG_DWORD
+		(CONST BYTE*)(LPCTSTR)strNum,	// 格納する値の「データ」が入ったバッファへのポインタ
+		(int)sizeof(strNum)		// dataのサイズを指定する
+	);
 
+	_ltow_s(pRect->top, strNum, 10);
+	result = RegSetValueEx(
+		hKey,	// 現在オープンしているキーのハンドル
+		TEXT("top"),	// 値の「名前」が入った文字列へのポインタ
+		0,	// 予約パラメータ。0を指定する
+		REG_SZ,	// 値の「種類」を指定する。NULLで終わる文字列はREG_SZ、32ビット値はREG_DWORD
+		(CONST BYTE*)(LPCTSTR)strNum,	// 格納する値の「データ」が入ったバッファへのポインタ
+		(int)sizeof(strNum)		// dataのサイズを指定する
+	);
+
+	_ltow_s(pRect->right, strNum, 10);
+	result = RegSetValueEx(
+		hKey,	// 現在オープンしているキーのハンドル
+		TEXT("right"),	// 値の「名前」が入った文字列へのポインタ
+		0,	// 予約パラメータ。0を指定する
+		REG_SZ,	// 値の「種類」を指定する。NULLで終わる文字列はREG_SZ、32ビット値はREG_DWORD
+		(CONST BYTE*)(LPCTSTR)strNum,	// 格納する値の「データ」が入ったバッファへのポインタ
+		(int)sizeof(strNum)		// dataのサイズを指定する
+	);
+
+	_ltow_s(pRect->bottom, strNum, 10);
+	result = RegSetValueEx(
+		hKey,	// 現在オープンしているキーのハンドル
+		TEXT("bottom"),	// 値の「名前」が入った文字列へのポインタ
+		0,	// 予約パラメータ。0を指定する
+		REG_SZ,	// 値の「種類」を指定する。NULLで終わる文字列はREG_SZ、32ビット値はREG_DWORD
+		(CONST BYTE*)(LPCTSTR)strNum,	// 格納する値の「データ」が入ったバッファへのポインタ
+		(int)sizeof(strNum)		// dataのサイズを指定する
+	);
+}
+
+void saveWindowState(HWND hwnd) {
+	HKEY hKey;
+	DWORD dwDisposition;
+	LONG result;
+	WINDOWPLACEMENT wndPlace;
+	wndPlace.length = sizeof(WINDOWPLACEMENT);
+	GetWindowPlacement(hwnd, &wndPlace);
+	RECT rcWnd = wndPlace.rcNormalPosition;
+
+	result = RegCreateKeyEx(HKEY_CURRENT_USER,
+		//HKEY_CLASSES_ROOT
+		//HKEY_CURRENT_CONFIG
+		//HKEY_CURRENT_USER
+		//HKEY_LOCAL_MACHINE
+		//HKEY_USERS
+		//Windows NT/2000：HKEY_PERFORMANCE_DATA も指定できます。
+		//Windows 95/98：HKEY_DYN_DATA も指定できます。
+		TEXT("Yakusaku\\SearchPubmed2FileName\\Position"),//キー
+		0,//予約
+		NULL,//指定
+		REG_OPTION_VOLATILE, //システムを再起動すると消える揮発性
+		//REG_OPTION_NON_VOLATILE,//不揮発性
+		KEY_ALL_ACCESS,//標準アクセス権のすべての権利を組み合わせたもの
+		NULL,
+		&hKey,
+		&dwDisposition);
+	//result が ERROR_SUCCESS であれば成功である．
+
+	saveRect(&rcWnd, hKey);
+
+	//キーを閉じる
+	RegCloseKey(hKey);
+}
+
+void loadRect(RECT* pRect, HKEY hKey)
+{
+	pRect->left = ::_ttoi(loadDataFromReg(hKey, TEXT("left")));
+	pRect->top = ::_ttoi(loadDataFromReg(hKey, TEXT("top")));
+	pRect->right = ::_ttoi(loadDataFromReg(hKey, TEXT("right")));
+	pRect->bottom = ::_ttoi(loadDataFromReg(hKey, TEXT("bottom")));
+}
+
+TCHAR* loadDataFromReg(HKEY hKey, LPCWSTR query) {
+	LONG result;
+	TCHAR data[1024];
+	DWORD dwType;		// 値の種類を受け取る
+	DWORD dwSize;		// データのサイズを受け取る
+
+	result = RegQueryValueEx(
+		hKey,	// 現在オープンしているキーのハンドル
+		query,	// 取得する値の「名前」が入った文字列へのポインタ
+		NULL,	// 予約パラメータ。NULLを指定する
+		&dwType,	// 値の「種類」を受け取る
+		NULL,		// 値の「データ」を受け取る。NULLを指定することも可能だが、データは受け取れない
+		&dwSize		// 終端文字'\0'を含んだDataのサイズを取得する
+	);
+	//実際にデータを取得（サイズの指定が正しくないと失敗することがある）
+	result = RegQueryValueEx(
+		hKey,	// 現在オープンしているキーのハンドル
+		query,	// 取得する値の「名前」が入った文字列へのポインタ
+		NULL,	// 予約パラメータ。NULLを指定する
+		&dwType,	// 値の「種類」を受け取る
+		(LPBYTE)(LPCTSTR)&data,	// 値の「データ」を受け取る。NULLを指定することも可能だが、データは受け取れない
+		&dwSize		// Dataのサイズを指定する
+	);
+
+	return data;
+}
+
+void loadWindowState(HWND hwnd) {
+	HKEY hKey;
+	DWORD dwDisposition;
+	LONG result;
+	WINDOWPLACEMENT wndPlace;
+	wndPlace.length = sizeof(WINDOWPLACEMENT);
+	GetWindowPlacement(hDlgCurrent, &wndPlace);
+	RECT rcWnd = wndPlace.rcNormalPosition;
+
+	result = RegCreateKeyEx(HKEY_CURRENT_USER,
+		//HKEY_CLASSES_ROOT
+		//HKEY_CURRENT_CONFIG
+		//HKEY_CURRENT_USER
+		//HKEY_LOCAL_MACHINE
+		//HKEY_USERS
+		//Windows NT/2000：HKEY_PERFORMANCE_DATA も指定できます。
+		//Windows 95/98：HKEY_DYN_DATA も指定できます。
+		TEXT("Yakusaku\\SearchPubmed2FileName\\Position"),//キー
+		0,//予約
+		NULL,//指定
+		REG_OPTION_VOLATILE, //システムを再起動すると消える揮発性
+		//REG_OPTION_NON_VOLATILE,//不揮発性
+		KEY_ALL_ACCESS,//標準アクセス権のすべての権利を組み合わせたもの
+		NULL,
+		&hKey,
+		&dwDisposition);
+	//result が ERROR_SUCCESS であれば成功である．
+
+	loadRect(&rcWnd, hKey);
+
+	// 対象モニタの情報を取得
+	HMONITOR hMonitor = MonitorFromRect(
+		&rcWnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO mi;
+	mi.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(hMonitor, &mi);
+
+	// 位置補正
+	if (rcWnd.right > mi.rcMonitor.right)
+	{
+		rcWnd.left -= rcWnd.right - mi.rcMonitor.right;
+		rcWnd.right = mi.rcMonitor.right;
+	}
+	if (rcWnd.left < mi.rcMonitor.left)
+	{
+		rcWnd.right += mi.rcMonitor.left - rcWnd.left;
+		rcWnd.left = mi.rcMonitor.left;
+	}
+	if (rcWnd.bottom > mi.rcMonitor.bottom)
+	{
+		rcWnd.top -= rcWnd.bottom - mi.rcMonitor.bottom;
+		rcWnd.bottom = mi.rcMonitor.bottom;
+	}
+	if (rcWnd.top < mi.rcMonitor.top)
+	{
+		rcWnd.bottom += mi.rcMonitor.top - rcWnd.top;
+		rcWnd.top = mi.rcMonitor.top;
+	}
+
+	// ウィンドウ位置復元
+	SetWindowPos(
+		hwnd, NULL, rcWnd.left, rcWnd.top,
+		rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top,
+		SWP_NOZORDER);
+
+	//キーを閉じる
+	RegCloseKey(hKey);
+}

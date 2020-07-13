@@ -9,8 +9,10 @@
 #include <nlohmann/json.hpp>
 #include <curl/curl.h> 
 #include "PubmedSearchUtils.h"
+#include "PubmedSearchApp.h"
 #include <cctype>
 #include <algorithm>
+#include <sstream>
 
 #define SIZE 1000
 using namespace std;
@@ -80,6 +82,31 @@ string getSummary(const char* url) {
     return chunk;
 }
 
+vector<string> split(string& s, char delim) {
+    vector<string> elems;
+    stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        if (!item.empty()) {
+            elems.push_back(item);
+        }
+    }
+    return elems;
+}
+
+string authorNameStrip(string fullName) {
+    char delim = ' ';
+    size_t num = split(fullName, delim).size();
+    //string famiyName = replaceString(fullName, " "s + split(fullName, delim)[num-1], ""s);
+    string familyName = ""s;
+    for (size_t i = 0; i < num - 1; ++i) {
+        familyName += split(fullName, delim)[i];
+        familyName += " "s;
+    }
+    familyName.pop_back();
+    return familyName;
+}
+
 string createNewFileName(json j) {
     // First author のlast name 抽出
     string firstAuthor = j["authors"][0]["name"];
@@ -87,6 +114,7 @@ string createNewFileName(json j) {
     int pos = firstAuthor.find(' ');
     a = firstAuthor.substr(0, pos);
     b = firstAuthor.substr((unsigned __int64)pos + 1);
+    string firstAuthorFamilyName = authorNameStrip(firstAuthor);
 
     // Last author のlast name 抽出
     string lastAuthor = j["lastauthor"];
@@ -94,13 +122,25 @@ string createNewFileName(json j) {
     int pos2 = lastAuthor.find(' ');
     c = lastAuthor.substr(0, pos2);
     d = lastAuthor.substr((unsigned __int64)pos2 + 1);
+    string lastAuthorFamilyName = authorNameStrip(lastAuthor);
+    //cerr << firstAuthorFamilyName << endl;
+    //cerr << lastAuthorFamilyName << endl;
+    string authors;
+    
+    if (firstAuthor == lastAuthor) {
+        authors = firstAuthorFamilyName;
+    }
+    else {
+        authors = firstAuthorFamilyName + " "s + lastAuthorFamilyName;
+    }
+    
 
     // 論文タイトルから末尾の「.」削除
     string papertitle = j["title"];
     size_t nCount = papertitle.size() - 1;
     if (papertitle[nCount] == '.')
         papertitle.pop_back();
-    string paperTitle = regex_replace(papertitle, regex("[/:*\?\"\'<>|]"), ""); // ファイル名に使えない特殊文字の削除
+    string paperTitle = regex_replace(papertitle, regex("[/:*\?\"<>|]"), ""); // ファイル名に使えない特殊文字の削除
     //string PaperTitle = regex_replace(paperTitle, regex("[\^\\s\\w]"), "");
 
     // 論文掲載誌の省略形 (例: Nature neuroscience→Nat neurosci)
@@ -111,7 +151,7 @@ string createNewFileName(json j) {
     string PubYear = PubDate.substr(0, 4); // 例: 2020
 
     // 論文情報をつなげて新規ファイル名を作成
-    string newFileName = a + " "s + c + " ("s + journalName + " "s + PubYear + ") "s + paperTitle;
+    string newFileName = authors + " ("s + journalName + " "s + PubYear + ") "s + paperTitle;
 
     return newFileName;
 }
@@ -121,7 +161,7 @@ string extractPaperTitle(json j) {
     return paperTitle;
 }
 
-string searchPubmedKeyword(char* title) {
+string searchPubmedKeyword(const char* title) {
     // NCBI E-utilities (Esearch) を利用したPubmed キーワード検索
     string esearchPrefix = (string)"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&sort=relevance&retmode=json&term=";
     string keywordOrg = string(title);
@@ -184,7 +224,7 @@ int levenshteinDistance(string x, string y) {
     return dist;
 }
 
-string exactSearchPubmedKeyword(char* title) {
+string exactSearchPubmedKeyword(const char* title) {
     string esearchPrefix = (string)"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&sort=relevance&retmode=json&term=";
     string keywordOrg = string(title);
     string keyword = regex_replace(keywordOrg, regex("\\s"), "+"); // replace "" to "+"
@@ -229,6 +269,13 @@ string extractFromCrossrefJson(json probPaperJson) {
     size_t authorNum = probPaperJson["author"].size();
     string firstAuthorFamilyName = probPaperJson["author"][0]["family"];
     string lastAuthorFamilyName = probPaperJson["author"][authorNum - 1]["family"];
+    string authors;
+    if (authorNum == 1) {
+        authors = firstAuthorFamilyName;
+    }
+    else {
+        authors = firstAuthorFamilyName + " "s + lastAuthorFamilyName;
+    }
 
     // Publication year
     int pubYear = probPaperJson["created"]["date-parts"][0][0];
@@ -240,6 +287,9 @@ string extractFromCrossrefJson(json probPaperJson) {
         // Journal short name
         journalName = probPaperJson["short-container-title"][0];
         journalName = regex_replace(journalName, regex("\\."), "");
+        if (journalName == ""s) {
+            journalName = probPaperJson["container-title"][0];
+        }
     }
     else if (probPaperJson["type"] == "posted-content") {
         journalName = probPaperJson["institution"]["name"];
@@ -249,14 +299,14 @@ string extractFromCrossrefJson(json probPaperJson) {
     }
 
     // New file name
-    string newFileName = firstAuthorFamilyName + " "s + lastAuthorFamilyName + " ("s \
+    string newFileName = authors + " ("s \
         + journalName + " "s + to_string(pubYear) + ") "s + paperTitle;
-    newFileName = regex_replace(newFileName, regex("[/:*\?\"\'<>|]"), "");
+    newFileName = regex_replace(newFileName, regex("[/:*\?\"<>|]"), "");
 
     return newFileName;
 }
 
-string searchCrossrefKeyword(char* title) {
+string searchCrossrefKeyword(const char* title) {
     string urlPrefix = (string)"https://api.crossref.org/works?sort=relevance&query=";
     string query = string(title);
     query = regex_replace(query, regex("\\s"), "+");
@@ -267,7 +317,7 @@ string searchCrossrefKeyword(char* title) {
     return extractFromCrossrefJson(probPaperJson);
 }
 
-string searchCrossrefDoi(char* doi) {
+string searchCrossrefDoi(const char* doi) {
     string urlPrefixDoi = (string)"https://api.crossref.org/works/";
     string Doi = string(doi);
     string urlDoi = urlPrefixDoi + Doi;

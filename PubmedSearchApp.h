@@ -10,11 +10,17 @@ using namespace std;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK childDlgProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK Edit1Proc(HWND, UINT, WPARAM, LPARAM);
 bool isStrSpace(TCHAR*);
 void sendClip(HWND, TCHAR*);
 BOOL SetDlgPosCenter(HWND);
 void setSearchResult(HWND, HWND, string);
+string replaceString(string, string, string);
+void enableAllButtons();
+void disableAllButtons();
+void saveRect(const RECT*, HKEY);
+void loadRect(RECT*, HKEY);
+void saveWindowState(HWND hwnd);
+void loadWindowState(HWND hwnd);
+TCHAR* loadDataFromReg(HKEY, LPCWSTR);
 
 #endif
