@@ -896,11 +896,25 @@ void loadWindowState(HWND hwnd) {
 		rcWnd.top = mi.rcMonitor.top;
 	}
 
+	wstring wsb = to_wstring(rcWnd.bottom);
+	//MessageBox(hwnd, wsb.c_str(), TEXT("bottom"), MB_OK);
+	wstring wsl = to_wstring(rcWnd.left);
+	//MessageBox(hwnd, wsl.c_str(), TEXT("left"), MB_OK);
+	wstring wsr = to_wstring(rcWnd.right);
+	//MessageBox(hwnd, wsr.c_str(), TEXT("right"), MB_OK);
+	wstring wst = to_wstring(rcWnd.top);
+	//MessageBox(hwnd, wst.c_str(), TEXT("top"), MB_OK);
 	// ウィンドウ位置復元
-	SetWindowPos(
-		hwnd, NULL, rcWnd.left, rcWnd.top,
-		rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top,
-		SWP_NOZORDER);
+	
+	if (!((rcWnd.left == 0) & (rcWnd.top == 0) & (rcWnd.right == 0) & (rcWnd.bottom == 0))) {
+		SetWindowPos(
+			hwnd, NULL, rcWnd.left, rcWnd.top,
+			rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top,
+			SWP_NOZORDER);
+	}
+	else {
+		SetDlgPosCenter(hwnd);
+	}
 
 	//キーを閉じる
 	RegCloseKey(hKey);
